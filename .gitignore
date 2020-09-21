@@ -1,0 +1,12 @@
+*.o
+*.exe
+*.bin
+roms/*
+*.rom
+psx
+test
+imgui.ini
+.breakpoints
+*.out.*
+saves/*
+*.sav

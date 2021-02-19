@@ -2,7 +2,7 @@
 
 # Documentation
 
-* [Open source](https://github.com/grumpycoders/pcsx-redux/tree/main/src/mips/openbios)
+* [Open source BIOS](https://github.com/grumpycoders/pcsx-redux/tree/main/src/mips/openbios)
 
 **Testing resources**
 

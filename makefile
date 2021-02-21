@@ -9,22 +9,20 @@ OBJDIR    = src
 
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp) \
             $(wildcard lib/imgui/*.cpp) \
-            lib/imgui/examples/imgui_impl_sdl.cpp \
-            lib/imgui/examples/imgui_impl_opengl3.cpp
-SOURCES  := $(filter-out $(SRCDIR)/lib/imgui//imgui_demo.cpp, $(SOURCES))
+            lib/imgui/imgui_impl_sdl.cpp \
+            lib/imgui/imgui_impl_opengl3.cpp
 SOURCES  := $(filter-out $(SRCDIR)/main.cpp, $(SOURCES))
 SOURCES  := $(filter-out $(SRCDIR)/test.cpp, $(SOURCES))
 
 INCLUDES := -Ilib/imgui \
             -Ilib/imgui_club/ \
-            -Ilib/imgui/examples \
-            -Ilib/imgui/examples/libs/gl3w \
+            -Ilib/gl3w \
             -I/usr/include/SDL2
 
 CXXFLAGS += $(INCLUDES)
 
 OBJECTS       := $(patsubst %.cpp, %.o, $(SOURCES))
-OBJECTS_C     := lib/imgui/examples/libs/gl3w/GL/gl3w.o
+OBJECTS_C     := lib/gl3w/GL/gl3w.o
 PSX_OBJECTS   := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/main.o
 TEST_OBJECTS  := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/test.o
 

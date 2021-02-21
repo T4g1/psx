@@ -1,8 +1,14 @@
-CC        = g++
 CXXFLAGS  = -std=c++17 -Wall -Wextra -I. -g -ggdb
 
-LINKER    = g++
-LFLAGS    = -Wall -I. -lm -lSDL2 -lGL -ldl -lstdc++fs
+ifeq ($(OS),Windows_NT)
+    CC        = g++
+    LINKER    = g++
+    LFLAGS    = -LC:\MinGW\lib -lm -lSDL2main -lSDL2 -static-libstdc++ -static-libgcc
+else
+    CC        = g++
+    LINKER    = g++
+    LFLAGS    = -lm -lSDL2 -lGL -ldl -lstdc++fs
+endif
 
 SRCDIR    = src
 OBJDIR    = src
@@ -14,8 +20,11 @@ SOURCES  := $(filter-out $(SRCDIR)/test.cpp, $(SOURCES))
 
 INCLUDES := -Ilib/imgui \
             -Ilib/imgui_club/ \
-            -Ilib/gl3w \
-            -I/usr/include/SDL2
+            -Ilib/gl3w
+
+ifeq ($(OS),Windows_NT)
+    INCLUDES += -IC:\MinGW\include
+endif
 
 CXXFLAGS += $(INCLUDES)
 

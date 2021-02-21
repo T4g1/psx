@@ -10,6 +10,8 @@
 
 #include "main.h"
 
+using namespace std;
+
 
 void show_usage()
 {

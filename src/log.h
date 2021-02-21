@@ -5,7 +5,7 @@
 
 
 #ifdef DEBUG
-    #define debug(fmt, ...) fprintf(stdout, fmt, ## __VA_ARGS__)
+    #define debug(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #else
     #define debug(fmt, ...)
 #endif
@@ -14,8 +14,8 @@
     #define info(fmt, ...)
     #define error(fmt, ...)
 #else
-    #define info(fmt, ...) fprintf(stdout, fmt, ## __VA_ARGS__)
-    #define error(fmt, ...) fprintf(stdout, fmt, ## __VA_ARGS__)
+    #define info(fmt, ...) printf(fmt, ## __VA_ARGS__)
+    #define error(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* LOG_H */

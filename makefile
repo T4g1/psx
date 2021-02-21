@@ -8,9 +8,7 @@ SRCDIR    = src
 OBJDIR    = src
 
 SOURCES  := $(wildcard $(SRCDIR)/*.cpp) \
-            $(wildcard lib/imgui/*.cpp) \
-            lib/imgui/imgui_impl_sdl.cpp \
-            lib/imgui/imgui_impl_opengl3.cpp
+            $(wildcard lib/imgui/*.cpp)
 SOURCES  := $(filter-out $(SRCDIR)/main.cpp, $(SOURCES))
 SOURCES  := $(filter-out $(SRCDIR)/test.cpp, $(SOURCES))
 
@@ -48,9 +46,10 @@ $(OBJECTS_C): %.o : %.c
 
 .PHONY: clean
 clean:
-ifneq (,$(wildcard $(OBJDIR)/*.o))
-	@rm $(OBJDIR)/*.o
-endif
+	-@rm $(OBJECTS)
+	-@rm $(OBJECTS_C)
+	-@rm $(OBJDIR)/main.o
+	-@rm $(OBJDIR)/test.o
 	@echo "Cleanup complete!"
 
 .PHONY: remove

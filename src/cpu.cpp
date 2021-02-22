@@ -12,7 +12,7 @@ CPU::~CPU()
  */
 bool CPU::init()
 {
-    PC = 0;
+    PC = DEFAULT_PC;
 
     return true;
 }
@@ -23,17 +23,17 @@ bool CPU::init()
  */
 void CPU::reset()
 {
-    PC = 0;
+    PC = DEFAULT_PC;
 }
 
 
 void CPU::run_next()
 {
-    // TODO: Fetch instruction
+    uint32_t instruction = 0; //load32(PC);
 
     PC += INSTRUCTION_LENGTH;
 
-    decode_and_execute(0);
+    decode_and_execute(instruction);
 }
 
 

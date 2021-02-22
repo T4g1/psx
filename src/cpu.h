@@ -3,7 +3,8 @@
 
 #include  <cstdint>
 
-#define INSTRUCTION_LENGTH  4 // 32 bits
+#define INSTRUCTION_LENGTH  4 // 4 * 8bits = 32 bits
+#define DEFAULT_PC          0xBFC00000
 
 /**
  * @brief      CPU for the PSX

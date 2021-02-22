@@ -2,8 +2,10 @@
 #define PSX_H
 
 #include <iostream>
+#include <string>
 
-#include "cpu.h"
+class CPU;
+class BIOS;
 
 
 /**
@@ -11,6 +13,7 @@
  */
 class PSX {
     CPU *cpu;
+    BIOS *bios;
 
     bool running;
     bool no_boot;
@@ -23,7 +26,7 @@ public:
 
     ~PSX();
 
-    bool init(const char *bios_path, const char *rom_path);
+    bool init(std::string bios_path, std::string rom_path);
     int run();
     void process();
     void handle_events();

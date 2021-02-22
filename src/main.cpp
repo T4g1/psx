@@ -10,12 +10,10 @@
 
 #include "main.h"
 
-using namespace std;
-
 
 void show_usage()
 {
-    std::cerr << "Usage: psx <option(s)> ROM\n"
+    std::cerr << "Usage: psx <option(s)> [ROM]\n"
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
               << "\t-b,--boot BOOT\tSpecifies BOOT ROM\n";
@@ -28,6 +26,8 @@ int main(int argc, char *argv[])
 
     if (argc < 2 || argc > 5) {
         show_usage();
+
+        return EXIT_FAILURE;
     }
 
     std::string rom;
@@ -54,6 +54,13 @@ int main(int argc, char *argv[])
             show_usage();
             return EXIT_FAILURE;
         }
+    }
+
+    if (boot.empty()) {
+        error("You need to specify a BIOS file to use\n");
+        show_usage();
+
+        return EXIT_FAILURE;
     }
 
     PSX *psx = new PSX();

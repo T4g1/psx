@@ -8,6 +8,8 @@
 #include "imgui_impl_opengl3.h"
 
 #include "log.h"
+#include "cpu.h"
+#include "bios.h"
 
 #include "psx.h"
 
@@ -22,17 +24,10 @@ PSX::~PSX()
 }
 
 
-bool PSX::init(const char *bios_path, const char *rom_path)
+bool PSX::init(std::string bios_path, std::string rom_path)
 {
-    this->bios_path = "";
-    if (bios_path != nullptr) {
-        this->bios_path = bios_path;
-    }
-
-    this->rom_path = "";
-    if (rom_path != nullptr) {
-        this->rom_path = rom_path;
-    }
+    this->bios_path = bios_path;
+    this->rom_path = rom_path;
 
     // Setup SDL
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -41,9 +36,11 @@ bool PSX::init(const char *bios_path, const char *rom_path)
     }
 
     cpu = new CPU();
+    bios = new BIOS();
 
-    running  = true;
+    running = true;
     running &= cpu->init();
+    running &= bios->init(bios_path);
 
     return running;
 }

@@ -18,6 +18,7 @@ public:
 
     bool init(std::string bios_path);
     bool load_bios(std::string path);
+    uint32_t load32(uint32_t address);
 };
 
 #endif /* BIOS_H */

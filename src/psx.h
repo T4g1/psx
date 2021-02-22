@@ -6,6 +6,7 @@
 
 class CPU;
 class BIOS;
+class Interconnect;
 
 
 /**
@@ -14,6 +15,7 @@ class BIOS;
 class PSX {
     CPU *cpu;
     BIOS *bios;
+    Interconnect *inter;
 
     bool running;
     bool no_boot;

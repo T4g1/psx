@@ -33,6 +33,9 @@ OBJECTS_C     := lib/gl3w/GL/gl3w.o
 PSX_OBJECTS   := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/main.o
 TEST_OBJECTS  := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/test.o
 
+debug: CXXFLAGS += -DDEBUG
+debug: all
+
 all: psx test
 
 psx: CXXFLAGS +=

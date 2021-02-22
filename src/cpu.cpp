@@ -1,3 +1,6 @@
+#include "log.h"
+#include "interconnect.h"
+
 #include "cpu.h"
 
 
@@ -29,7 +32,7 @@ void CPU::reset()
 
 void CPU::run_next()
 {
-    uint32_t instruction = 0; //load32(PC);
+    uint32_t instruction = inter->load32(PC);
 
     PC += INSTRUCTION_LENGTH;
 
@@ -39,5 +42,12 @@ void CPU::run_next()
 
 void CPU::decode_and_execute(uint32_t data)
 {
+    debug("[CPU] Instruction: 0x%08x\n", data);
     // TODO
+}
+
+
+void CPU::set_inter(Interconnect* inter)
+{
+    this->inter = inter;
 }

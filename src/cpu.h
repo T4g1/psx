@@ -5,6 +5,7 @@
 
 #define INSTRUCTION_LENGTH  4 // 4 * 8bits = 32 bits
 #define DEFAULT_PC          0xBFC00000
+#define REG_COUNT           32
 
 class Interconnect;
 
@@ -16,7 +17,13 @@ class CPU {
     Interconnect *inter;
 
     // Registers
+    uint32_t reg[REG_COUNT];
     uint32_t PC;
+
+    uint32_t get_reg(size_t index);
+    void set_reg(size_t index, uint32_t value);
+
+    void LUI(size_t rt, uint16_t imm16);
 
 public:
     ~CPU();

@@ -22,7 +22,7 @@ bool Interconnect::init(BIOS *bios)
 
 uint32_t Interconnect::load32(uint32_t address)
 {
-    debug("[MEM] Fetch from: 0x%08x\n", address);
+    //debug("[MEM] Fetch from: 0x%08x\n", address);
 
     // Is it mapped to BIOS ?
     if (BIOS_START <= address && address < BIOS_END) {

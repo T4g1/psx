@@ -58,10 +58,7 @@ $(OBJECTS_C): %.o : %.c
 
 .PHONY: clean
 clean:
-	-@rm $(OBJECTS)
-	-@rm $(OBJECTS_C)
-	-@rm $(OBJDIR)/main.o
-	-@rm $(OBJDIR)/test.o
+	-@rm $(wildcard $(OBJDIR)/*.o)
 	@echo "Cleanup complete!"
 
 .PHONY: remove

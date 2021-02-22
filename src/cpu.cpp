@@ -56,10 +56,11 @@ void CPU::decode_and_execute(uint32_t data)
     uint8_t opcode = get_primary_opcode(data);
 
     switch(opcode) {
-        case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
-        default:
-            error("Unhandled OPCODE: 0x%08x", data);
-            exit(1);
+    case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
+    case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
+    default:
+        error("Unhandled OPCODE: 0x%02x", opcode);
+        exit(1);
     }
 }
 
@@ -67,6 +68,18 @@ void CPU::decode_and_execute(uint32_t data)
 void CPU::set_inter(Interconnect* inter)
 {
     this->inter = inter;
+}
+
+
+void CPU::display_registers()
+{
+    debug("PC: 0x%08x ", PC);
+    debug("HI: 0x%08x ", HI);
+    debug("LO: 0x%08x\n", LO);
+
+    for (size_t i=0; i<REG_COUNT; i++) {
+        debug("$r%zu: 0x%08x\n", i, reg[i]);
+    }
 }
 
 
@@ -80,6 +93,14 @@ void CPU::set_reg(size_t index, uint32_t value)
 {
     reg[index] = value;
     reg[0] = 0;
+}
+
+
+void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
+{
+    set_reg(rt, get_reg(rs) | imm16);
+
+    display_registers();
 }
 
 

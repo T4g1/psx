@@ -5,6 +5,7 @@
 
 #define INSTRUCTION_LENGTH  4 // 4 * 8bits = 32 bits
 #define DEFAULT_PC          0xBFC00000
+#define DEFAULT_REG         0xDEADBEEF
 #define REG_COUNT           32
 
 class Interconnect;

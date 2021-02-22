@@ -18,9 +18,7 @@ CPU::~CPU()
  */
 bool CPU::init()
 {
-    reg[0] = 0;
-
-    PC = DEFAULT_PC;
+    reset();
 
     return true;
 }
@@ -31,6 +29,12 @@ bool CPU::init()
  */
 void CPU::reset()
 {
+    reg[0] = 0;
+    for (size_t i=1; i<REG_COUNT; i++) {
+        reg[i] = DEFAULT_REG;
+    }
+
+    PC = DEFAULT_PC;
     PC = DEFAULT_PC;
 }
 

@@ -23,13 +23,6 @@ class CPU {
     uint32_t HI;
     uint32_t LO;
 
-    uint32_t get_reg(size_t index);
-    void set_reg(size_t index, uint32_t value);
-
-    void ORI(size_t rs, size_t rt, uint16_t imm16);
-    void LUI(size_t rt, uint16_t imm16);
-    void SW(size_t rs, size_t rt, uint16_t imm16);
-
 public:
     ~CPU();
 
@@ -41,6 +34,16 @@ public:
     void set_inter(Interconnect* inter);
 
     void display_registers();
+
+    uint32_t get_reg(size_t index);
+    void set_reg(size_t index, uint32_t value);
+
+    void SPECIAL(uint32_t data);
+    void ORI(size_t rs, size_t rt, uint16_t imm16);
+    void LUI(size_t rt, uint16_t imm16);
+    void SW(size_t rs, size_t rt, uint16_t imm16);
+
+    void SLL(size_t rt, size_t rd, uint8_t imm5);
 };
 
 #endif /* CPU_H */

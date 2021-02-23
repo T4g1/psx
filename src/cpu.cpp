@@ -56,6 +56,7 @@ void CPU::decode_and_execute(uint32_t data)
     uint8_t opcode = get_primary_opcode(data);
 
     switch(opcode) {
+    case 0x00: SPECIAL(data); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -97,6 +98,19 @@ void CPU::set_reg(size_t index, uint32_t value)
 }
 
 
+void CPU::SPECIAL(uint32_t data)
+{
+    uint8_t opcode = get_secondary_opcode(data);
+
+    switch(opcode) {
+    case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    default:
+        error("Unhandled SECONDARY OPCODE: 0x%02x", opcode);
+        exit(1);
+    }
+}
+
+
 void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
 {
     set_reg(rt, get_reg(rs) | imm16);
@@ -111,9 +125,11 @@ void CPU::LUI(size_t rt, uint16_t imm16)
 
 void CPU::SW(size_t rs, size_t rt, uint16_t imm16)
 {
-    debug("RS: 0x%08x ", reg[rs]);
-    debug("RT: 0x%08x ", reg[rt]);
-    debug("IMM16: 0x%04x\n", imm16);
-
     inter->store32(get_reg(rs) + imm16, get_reg(rt));
+}
+
+
+void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
+{
+    set_reg(rd, get_reg(rt) << imm5);
 }

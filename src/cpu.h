@@ -17,6 +17,9 @@ class Interconnect;
 class CPU {
     Interconnect *inter;
 
+    // Used to store next instructions so JUMPS behave correctly
+    uint32_t next_instruction;
+
     // Registers
     uint32_t reg[REG_COUNT];
     uint32_t PC;
@@ -39,11 +42,14 @@ public:
     void set_reg(size_t index, uint32_t value);
 
     void SPECIAL(uint32_t data);
+    void J(uint32_t imm26);
+    void ADDIU(size_t rs, size_t rt, uint32_t imm16);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
-    void SW(size_t rs, size_t rt, uint16_t imm16);
+    void SW(size_t rs, size_t rt, uint32_t imm16);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
+    void OR(size_t rs, size_t rt, size_t rd);
 };
 
 #endif /* CPU_H */

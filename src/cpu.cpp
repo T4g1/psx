@@ -29,6 +29,8 @@ bool CPU::init()
  */
 void CPU::reset()
 {
+    next_instruction = 0x00000000;
+
     reg[0] = 0;
     for (size_t i=1; i<REG_COUNT; i++) {
         reg[i] = DEFAULT_REG;
@@ -41,7 +43,9 @@ void CPU::reset()
 
 void CPU::run_next()
 {
-    uint32_t instruction = inter->load32(PC);
+    uint32_t instruction = next_instruction;
+
+    next_instruction = inter->load32(PC);
 
     PC += INSTRUCTION_LENGTH;
 
@@ -57,6 +61,8 @@ void CPU::decode_and_execute(uint32_t data)
 
     switch(opcode) {
     case 0x00: SPECIAL(data); break;
+    case 0x02: J(get_imm26(data)); break;
+    case 0x09: ADDIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -104,10 +110,23 @@ void CPU::SPECIAL(uint32_t data)
 
     switch(opcode) {
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
         error("Unhandled SECONDARY OPCODE: 0x%02x", opcode);
         exit(1);
     }
+}
+
+
+void CPU::J(uint32_t imm26)
+{
+    PC = (PC & 0xF0000000) | (imm26 << 2);
+}
+
+
+void CPU::ADDIU(size_t rs, size_t rt, uint32_t imm16)
+{
+    set_reg(rt, get_reg(rs) + imm16);
 }
 
 
@@ -123,7 +142,7 @@ void CPU::LUI(size_t rt, uint16_t imm16)
 }
 
 
-void CPU::SW(size_t rs, size_t rt, uint16_t imm16)
+void CPU::SW(size_t rs, size_t rt, uint32_t imm16)
 {
     inter->store32(get_reg(rs) + imm16, get_reg(rt));
 }
@@ -132,4 +151,10 @@ void CPU::SW(size_t rs, size_t rt, uint16_t imm16)
 void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
 {
     set_reg(rd, get_reg(rt) << imm5);
+}
+
+
+void CPU::OR(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg(rs) | get_reg(rt));
 }

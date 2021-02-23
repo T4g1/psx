@@ -11,7 +11,7 @@ uint8_t get_primary_opcode(uint32_t instruction)
 
 uint8_t get_secondary_opcode(uint32_t instruction)
 {
-    return extract(instruction, 0, 5);
+    return extract(instruction, 0, 6);
 }
 
 
@@ -47,12 +47,13 @@ uint16_t get_imm16(uint32_t instruction)
 
 /**
  * @brief      Same as get_imm16 but gets signed value
+ * Signed value is the same a 16bit value but padded with MSB on the left
  */
-uint16_t get_imm16_se(uint32_t instruction)
+uint32_t get_imm16_se(uint32_t instruction)
 {
     int16_t value = extract(instruction, 0, 16) & 0xFFFF;
 
-    return (uint16_t)value;
+    return (uint32_t)value;
 }
 
 

@@ -11,6 +11,9 @@
 #define EXPANSION_1_BASE_ADDR   0x1F000000
 #define EXPANSION_2_BASE_ADDR   0x1F802000
 
+#define RAM_SIZE_START          0x1F801060
+#define RAM_SIZE_SIZE           4
+
 
 Interconnect::~Interconnect()
 {
@@ -58,10 +61,16 @@ void Interconnect::store32(uint32_t address, uint32_t value)
             }
             break;
         default:
-            error("Unhandled write to MEM_CONTROL register: 0x%08x\n", offset);
+            error("Unhandled write to MEM_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
             //exit(1);
             break;
         }
+    }
+
+    // RAM_SIZE for RAM configuration
+    else if (in_range(address, RAM_SIZE_START, RAM_SIZE_SIZE)) {
+        uint32_t offset = address - MEM_CONTROL_START;
+        error("Unhandled write to RAM_SIZE register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     else {

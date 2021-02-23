@@ -11,7 +11,7 @@ size_t get_rt(uint32_t instruction);
 size_t get_rd(uint32_t instruction);
 uint8_t get_imm5(uint32_t instruction);
 uint16_t get_imm16(uint32_t instruction);
-uint16_t get_imm16_se(uint32_t instruction);
+uint32_t get_imm16_se(uint32_t instruction);
 uint32_t get_imm26(uint32_t instruction);
 uint32_t get_comment(uint32_t instruction);
 

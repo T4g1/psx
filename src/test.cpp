@@ -3,6 +3,7 @@
 #include <iostream>
 #include <initializer_list>
 
+#include "instruction.h"
 #include "log.h"
 #include "cpu.h"
 #include "bios.h"
@@ -42,6 +43,42 @@ bool test_init()
 }
 
 
+bool test_instruction()
+{
+    ASSERT(get_imm16(0x00000000) == 0x0000);
+    ASSERT(get_imm16(0x00000001) == 0x0001);
+    ASSERT(get_imm16(0x000001AD) == 0x01AD);
+    ASSERT(get_imm16(0x0000FFFF) == 0xFFFF);
+    ASSERT(get_imm16(0x000083C5) == 0x83C5);
+
+    ASSERT(get_imm16_se(0x00000000) == 0x00000000);
+    ASSERT(get_imm16_se(0x00000001) == 0x00000001);
+    ASSERT(get_imm16_se(0x000001AD) == 0x000001AD);
+    ASSERT(get_imm16_se(0x0000FFFF) == 0xFFFFFFFF);
+    ASSERT(get_imm16_se(0x000083C5) == 0xFFFF83C5);
+
+    return true;
+}
+
+
+/*********************************
+ * CPU OPCODES
+ *********************************/
+
+bool test_ADDIU()
+{
+    cpu->reset();
+    cpu->set_reg(1, 0xFFFFFFFF);
+
+    cpu->ADDIU(1, 1, 0x00000001);
+    ASSERT(cpu->get_reg(1) == 0x00000000);
+
+    cpu->ADDIU(1, 1, 0xFFFFFFFF);
+    ASSERT(cpu->get_reg(1) == 0xFFFFFFFF);
+
+    return true;
+}
+
 bool test_ORI()
 {
     cpu->reset();
@@ -79,7 +116,9 @@ int main(int argc, char *argv[])
     }
 
     test("Generic: Initialisation", &test_init);
+    test("Generic: Instruction", &test_instruction);
 
+    test("CPU: ADDIU", &test_ADDIU);
     test("CPU: ORI", &test_ORI);
 
     return EXIT_SUCCESS;

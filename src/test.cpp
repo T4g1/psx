@@ -65,6 +65,23 @@ bool test_instruction()
  * CPU OPCODES
  *********************************/
 
+bool test_ADDI()
+{
+    cpu->reset();
+
+    // Overflow
+    //cpu->set_reg(1, 0xFFFFFFFF);
+    //cpu->ADDI(1, 1, 0x00000001);
+    //ASSERT(cpu->get_reg(1) == 0x00000000);
+
+    // Underflow
+    cpu->set_reg(1, 0x00000000);
+    cpu->ADDI(1, 1, 0xFFFFFFFF);
+    ASSERT(cpu->get_reg(1) == 0xFFFFFFFF);
+
+    return true;
+}
+
 bool test_ADDIU()
 {
     cpu->reset();
@@ -118,6 +135,7 @@ int main(int argc, char *argv[])
     test("Generic: Initialisation", &test_init);
     test("Generic: Instruction", &test_instruction);
 
+    test("CPU: ADDI", &test_ADDI);
     test("CPU: ADDIU", &test_ADDIU);
     test("CPU: ORI", &test_ORI);
 

@@ -15,6 +15,12 @@ uint8_t get_secondary_opcode(uint32_t instruction)
 }
 
 
+uint8_t get_cop_opcode(uint32_t instruction)
+{
+    return extract(instruction, 21, 5);
+}
+
+
 size_t get_rs(uint32_t instruction)
 {
     return extract(instruction, 21, 5);

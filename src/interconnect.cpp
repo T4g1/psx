@@ -14,6 +14,9 @@
 #define RAM_SIZE_START          0x1F801060
 #define RAM_SIZE_SIZE           4
 
+#define CACHE_CONTROL_START     0xFFFE0130
+#define CACHE_CONTROL_SIZE      4
+
 
 Interconnect::~Interconnect()
 {
@@ -69,8 +72,14 @@ void Interconnect::store32(uint32_t address, uint32_t value)
 
     // RAM_SIZE for RAM configuration
     else if (in_range(address, RAM_SIZE_START, RAM_SIZE_SIZE)) {
-        uint32_t offset = address - MEM_CONTROL_START;
+        uint32_t offset = address - RAM_SIZE_START;
         error("Unhandled write to RAM_SIZE register: 0x%08x: 0x%08x\n", offset, value);
+    }
+
+    // CACHE_CONTROL register
+    else if (in_range(address, CACHE_CONTROL_START, CACHE_CONTROL_SIZE)) {
+        uint32_t offset = address - CACHE_CONTROL_START;
+        error("Unhandled write to CACHE_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     else {

@@ -26,6 +26,9 @@ class CPU {
     uint32_t HI;
     uint32_t LO;
 
+    // COP0 registers
+    uint32_t SR;
+
 public:
     ~CPU();
 
@@ -41,15 +44,25 @@ public:
     uint32_t get_reg(size_t index);
     void set_reg(size_t index, uint32_t value);
 
+    void branch(uint32_t offset);
+
     void SPECIAL(uint32_t data);
     void J(uint32_t imm26);
-    void ADDIU(size_t rs, size_t rt, uint32_t imm16);
+    void BNE(size_t rs, size_t rt, uint32_t imm16_se);
+    void ADDI(size_t rs, size_t rt, uint32_t imm16_se);
+    void ADDIU(size_t rs, size_t rt, uint32_t imm16_se);
+    void COP0(uint32_t data);
+    void COP1(uint32_t data);
+    void COP2(uint32_t data);
+    void COP3(uint32_t data);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
-    void SW(size_t rs, size_t rt, uint32_t imm16);
+    void SW(size_t rs, size_t rt, uint32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void OR(size_t rs, size_t rt, size_t rd);
+
+    void MTC0(size_t rt, size_t rd);
 };
 
 #endif /* CPU_H */

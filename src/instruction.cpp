@@ -1,12 +1,6 @@
 #include "instruction.h"
 
-
-uint32_t extract(uint32_t data, size_t from, size_t size)
-{
-    uint32_t mask = (1 << size) - 1;
-
-    return (data >> from) & mask;
-}
+#include "common.h"
 
 
 uint8_t get_primary_opcode(uint32_t instruction)
@@ -48,6 +42,17 @@ uint8_t get_imm5(uint32_t instruction)
 uint16_t get_imm16(uint32_t instruction)
 {
     return extract(instruction, 0, 16);
+}
+
+
+/**
+ * @brief      Same as get_imm16 but gets signed value
+ */
+uint16_t get_imm16_se(uint32_t instruction)
+{
+    int16_t value = extract(instruction, 0, 16) & 0xFFFF;
+
+    return (uint16_t)value;
 }
 
 

@@ -28,6 +28,7 @@ class CPU {
 
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
+    void SW(size_t rs, size_t rt, uint16_t imm16);
 
 public:
     ~CPU();

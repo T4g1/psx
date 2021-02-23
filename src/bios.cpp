@@ -1,6 +1,7 @@
 #include <fstream>
 
 #include "log.h"
+#include "common.h"
 
 #include "bios.h"
 
@@ -33,6 +34,15 @@ bool BIOS::load_bios(std::string path)
     file.read((char*)data, BIOS_SIZE * sizeof(uint8_t));
 
     return true;
+}
+
+
+void BIOS::store32(uint32_t address, uint32_t value)
+{
+    data[address + 0] = extract(value, 0, 8);
+    data[address + 1] = extract(value, 8, 8);
+    data[address + 2] = extract(value, 16, 8);
+    data[address + 3] = extract(value, 24, 8);
 }
 
 

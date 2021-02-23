@@ -18,6 +18,8 @@ public:
 
     bool init(std::string bios_path);
     bool load_bios(std::string path);
+
+    void store32(uint32_t address, uint32_t value);
     uint32_t load32(uint32_t address);
 };
 

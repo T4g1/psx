@@ -58,6 +58,7 @@ void CPU::decode_and_execute(uint32_t data)
     switch(opcode) {
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
+    case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     default:
         error("Unhandled OPCODE: 0x%02x", opcode);
         exit(1);
@@ -99,12 +100,20 @@ void CPU::set_reg(size_t index, uint32_t value)
 void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
 {
     set_reg(rt, get_reg(rs) | imm16);
-
-    display_registers();
 }
 
 
 void CPU::LUI(size_t rt, uint16_t imm16)
 {
     set_reg(rt, imm16 << 16);
+}
+
+
+void CPU::SW(size_t rs, size_t rt, uint16_t imm16)
+{
+    debug("RS: 0x%08x ", reg[rs]);
+    debug("RT: 0x%08x ", reg[rt]);
+    debug("IMM16: 0x%04x\n", imm16);
+
+    inter->store32(get_reg(rs) + imm16, get_reg(rt));
 }

@@ -57,7 +57,7 @@ void CPU::run_next()
 
 void CPU::decode_and_execute(uint32_t data)
 {
-    debug("[CPU] PC: 0x%08x Instruction: 0x%08x\n", PC, data);
+    //debug("[CPU] PC: 0x%08x Instruction: 0x%08x\n", PC, data);
 
     uint8_t opcode = get_primary_opcode(data);
 
@@ -75,7 +75,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     default:
-        error("Unhandled OPCODE: 0x%02x", opcode);
+        error("Unhandled OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
     }
 }
@@ -114,8 +114,8 @@ void CPU::set_reg(size_t index, uint32_t value)
 
 void CPU::branch(uint32_t offset)
 {
+    PC += offset;
     PC -= INSTRUCTION_LENGTH;   // Compensate for run_next
-    PC += (offset << 2);
 }
 
 
@@ -146,7 +146,7 @@ void CPU::J(uint32_t imm26)
 void CPU::BNE(size_t rs, size_t rt, uint32_t imm16_se)
 {
     if (get_reg(rs) != get_reg(rt)) {
-        branch(imm16_se);
+        branch(imm16_se << 2);
     }
 }
 
@@ -215,7 +215,7 @@ void CPU::LUI(size_t rt, uint16_t imm16)
 void CPU::SW(size_t rs, size_t rt, uint32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
-        info("Ignoring store while cache is isolated\n");
+        //debug("Ignoring store while cache is isolated\n");
         return;
     }
 

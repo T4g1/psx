@@ -3,7 +3,7 @@ CXXFLAGS  = -std=c++17 -Wall -Wextra -I. -g -ggdb
 ifeq ($(OS),Windows_NT)
     CC        = g++
     LINKER    = g++
-    LFLAGS    = -LC:\MinGW\lib -lm -lSDL2main -lSDL2 -static-libstdc++ -static-libgcc
+    LFLAGS    = -LC:\MinGW\lib -static-libstdc++ -static-libgcc -lm -lSDL2main -lSDL2
 else
     CC        = g++
     LINKER    = g++

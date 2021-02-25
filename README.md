@@ -14,6 +14,10 @@ sudo apt install libsdl2
 make
 ```
 
+## For windows
+
+We recommend using the following toolchain: [https://nuwen.net/mingw.html](https://nuwen.net/mingw.html)
+
 # Documentation
 
 Some PDF are already available in the `doc\` folder

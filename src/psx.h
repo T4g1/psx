@@ -6,6 +6,7 @@
 
 class CPU;
 class BIOS;
+class RAM;
 class Interconnect;
 
 
@@ -15,6 +16,7 @@ class Interconnect;
 class PSX {
     CPU *cpu;
     BIOS *bios;
+    RAM *ram;
     Interconnect *inter;
 
     bool running;

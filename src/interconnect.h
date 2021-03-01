@@ -4,6 +4,7 @@
 #include <cstdint>
 
 class BIOS;
+class RAM;
 
 
 /**
@@ -12,11 +13,12 @@ class BIOS;
  */
 class Interconnect {
     BIOS *bios;
+    RAM *ram;
 
 public:
     ~Interconnect();
 
-    bool init(BIOS *bios);
+    bool init(BIOS *bios, RAM *ram);
     void store32(uint32_t address, uint32_t value);
     uint32_t load32(uint32_t address);
 };

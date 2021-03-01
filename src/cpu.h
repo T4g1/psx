@@ -1,6 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
+#include  <array>
 #include  <cstdint>
 
 #define INSTRUCTION_LENGTH  4 // 4 * 8bits = 32 bits
@@ -21,10 +22,17 @@ class CPU {
     uint32_t next_instruction;
 
     // Registers
-    uint32_t reg[REG_COUNT];
+    std::array<uint32_t, REG_COUNT> reg;
     uint32_t PC;
     uint32_t HI;
     uint32_t LO;
+
+    // Emulates load delay: Contains output of current instructions
+    std::array<uint32_t, REG_COUNT> out_reg;
+
+    // Pending load (if load_reg != 0 thre is a pending load)
+    size_t load_reg = 0;
+    uint32_t load_value = 0;
 
     // COP0 registers
     uint32_t SR;
@@ -55,6 +63,7 @@ public:
     void COP1(uint32_t data);
     void COP2(uint32_t data);
     void COP3(uint32_t data);
+    void LW(size_t rs, size_t rt, uint32_t imm16_se);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
     void SW(size_t rs, size_t rt, uint32_t imm16_se);

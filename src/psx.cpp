@@ -10,6 +10,7 @@
 #include "log.h"
 #include "cpu.h"
 #include "bios.h"
+#include "ram.h"
 #include "interconnect.h"
 
 #include "psx.h"
@@ -38,12 +39,14 @@ bool PSX::init(std::string bios_path, std::string rom_path)
 
     cpu = new CPU();
     bios = new BIOS();
+    ram = new RAM();
     inter = new Interconnect();
 
     running = true;
     running &= cpu->init();
     running &= bios->init(bios_path);
-    running &= inter->init(bios);
+    running &= ram->init();
+    running &= inter->init(bios, ram);
 
     if (running) {
         cpu->set_inter(inter);

@@ -34,12 +34,15 @@ void CPU::reset()
     next_instruction = 0x00000000;
 
     reg[0] = 0;
+    out_reg[0] = 0;
     for (size_t i=1; i<REG_COUNT; i++) {
         reg[i] = DEFAULT_REG;
+        out_reg[i] = DEFAULT_REG;
     }
 
     PC = DEFAULT_PC;
-    PC = DEFAULT_PC;
+    HI = DEFAULT_REG;
+    LO = DEFAULT_REG;
 }
 
 
@@ -51,7 +54,14 @@ void CPU::run_next()
 
     PC += INSTRUCTION_LENGTH;
 
+    // Execute pending load
+    set_reg(load_reg, load_value);
+    load_reg = 0;
+
     decode_and_execute(instruction);
+
+    // Set input registers for the next instruction
+    reg = out_reg;
 }
 
 
@@ -71,6 +81,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x11: COP1(data); break;
     case 0x12: COP2(data); break;
     case 0x13: COP3(data); break;
+    case 0x23: LW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -107,8 +118,8 @@ uint32_t CPU::get_reg(size_t index)
 
 void CPU::set_reg(size_t index, uint32_t value)
 {
-    reg[index] = value;
-    reg[0] = 0;
+    out_reg[index] = value;
+    out_reg[0] = 0;
 }
 
 
@@ -175,11 +186,10 @@ void CPU::COP0(uint32_t data)
 {
     uint8_t opcode = get_cop_opcode(data);
 
-
     switch(opcode) {
     case 0b00100: MTC0(get_rt(data), get_rd(data)); break;
     default:
-        error("Unhandled COP0 OPCODE: 0x%02x", opcode);
+        error("Unhandled COP0 OPCODE: 0x%02x\n", opcode);
         exit(1);
     }
 }
@@ -200,6 +210,18 @@ void CPU::COP3(uint32_t data)
 {
     error("Unhandled COP3: 0x%08x", data);
     exit(1);
+}
+
+void CPU::LW(size_t rs, size_t rt, uint32_t imm16_se)
+{
+    if (SR & SR_CACHE_ISOLATION) {
+        //debug("Ignoring load while cache is isolated\n");
+        return;
+    }
+
+    // Create a pending load
+    load_reg = rt;
+    load_value = inter->load32(get_reg(rs) + imm16_se);
 }
 
 void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
@@ -248,9 +270,28 @@ void CPU::OR(size_t rs, size_t rt, size_t rd)
 
 void CPU::MTC0(size_t rt, size_t rd)
 {
+    uint32_t value = get_reg(rt);
+
     switch(rd) {
+    case 3:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 11:
+        if (value != 0) {
+            error("Unhandled write to COP0 R%zu\n", rd);
+            exit(1);
+        }
+        break;
     case 12:
         SR = get_reg(rt);
+        break;
+    case 13:
+        if (value != 0) {
+            error("Unhandled write to COP0 CAUSE\n");
+            exit(1);
+        }
         break;
     default:
         error("Unhandled COP0 register: %zu\n", rd);

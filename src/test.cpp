@@ -7,12 +7,14 @@
 #include "log.h"
 #include "cpu.h"
 #include "bios.h"
+#include "ram.h"
 #include "interconnect.h"
 
 
 std::string bios_path = "";
 CPU *cpu;
 BIOS *bios;
+RAM *ram;
 Interconnect *inter;
 
 
@@ -26,12 +28,14 @@ bool test_init()
 {
     cpu = new CPU();
     bios = new BIOS();
+    ram = new RAM();
     inter = new Interconnect();
 
     bool running = true;
     running &= cpu->init();
     running &= bios->init(bios_path);
-    running &= inter->init(bios);
+    running &= ram->init();
+    running &= inter->init(bios, ram);
 
     if (running) {
         cpu->set_inter(inter);

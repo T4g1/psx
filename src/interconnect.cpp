@@ -1,8 +1,11 @@
+#include "interconnect.h"
+
 #include "log.h"
 #include "bios.h"
+#include "ram.h"
 #include "common.h"
 
-#include "interconnect.h"
+#define RAM_START               0xA0000000
 
 #define BIOS_START              0xBFC00000
 #define MEM_CONTROL_START       0x1F801000
@@ -23,9 +26,10 @@ Interconnect::~Interconnect()
 }
 
 
-bool Interconnect::init(BIOS *bios)
+bool Interconnect::init(BIOS *bios, RAM *ram)
 {
     this->bios = bios;
+    this->ram = ram;
 
     return true;
 }
@@ -41,8 +45,13 @@ void Interconnect::store32(uint32_t address, uint32_t value)
 
     //debug("[MEM] Store to: 0x%08x\n", address);
 
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        ram->store32(address - RAM_START, value);
+    }
+
     // Is it mapped to BIOS ?
-    if (in_range(address, BIOS_START, BIOS_SIZE)) {
+    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         bios->store32(address - BIOS_START, value);
     }
 
@@ -97,10 +106,15 @@ uint32_t Interconnect::load32(uint32_t address)
         exit(1);
     }
 
-    //debug("[MEM] Fetch from: 0x%08x\n", address);
+    //debug("[MEM] Load from: 0x%08x\n", address);
+
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        return ram->load32(address - RAM_START);
+    }
 
     // Is it mapped to BIOS ?
-    if (in_range(address, BIOS_START, BIOS_SIZE)) {
+    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         return bios->load32(address - BIOS_START);
     }
 

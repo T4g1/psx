@@ -142,7 +142,9 @@ void CPU::SPECIAL(uint32_t data)
 
     switch(opcode) {
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
         error("Unhandled SECONDARY OPCODE: 0x%02x", opcode);
         exit(1);
@@ -256,9 +258,19 @@ void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
     set_reg(rd, get_reg(rt) << imm5);
 }
 
+void CPU::ADDU(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg(rs) + get_reg(rt));
+}
+
 void CPU::OR(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg(rs) | get_reg(rt));
+}
+
+void CPU::SLTU(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg(rs) < get_reg(rt));
 }
 
 

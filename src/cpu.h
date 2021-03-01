@@ -69,7 +69,9 @@ public:
     void SW(size_t rs, size_t rt, uint32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
+    void ADDU(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
+    void SLTU(size_t rs, size_t rt, size_t rd);
 
     void MTC0(size_t rt, size_t rd);
 };

@@ -5,20 +5,40 @@
 #include "ram.h"
 #include "common.h"
 
-#define RAM_START               0xA0000000
+#define RAM_START               0x00000000
 
-#define BIOS_START              0xBFC00000
-#define MEM_CONTROL_START       0x1F801000
-#define MEM_CONTROL_SIZE        36
+#define BIOS_START              0x1FC00000
 
-#define EXPANSION_1_BASE_ADDR   0x1F000000
-#define EXPANSION_2_BASE_ADDR   0x1F802000
+#define SYS_CONTROL_START       0x1F801000
+#define SYS_CONTROL_SIZE        36
 
 #define RAM_SIZE_START          0x1F801060
 #define RAM_SIZE_SIZE           4
 
+// KSEG2
 #define CACHE_CONTROL_START     0xFFFE0130
 #define CACHE_CONTROL_SIZE      4
+
+#define EXPANSION_1_BASE_ADDR   0x1F000000
+#define EXPANSION_2_BASE_ADDR   0x1F802000
+
+
+const uint32_t REGION_MASK[] = {
+    // KUSEG: 2048MB
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    // KSEG0: 512MB
+    0x7FFFFFFF,
+    // KSEG1: 512MB
+    0x1FFFFFFF,
+    // KSEG2: 1024MB
+    0xFFFFFFFF, 0xFFFFFFFF
+};
+
+
+uint32_t mask_region(uint32_t address)
+{
+    return address & REGION_MASK[address >> 29];
+}
 
 
 Interconnect::~Interconnect()
@@ -35,8 +55,24 @@ bool Interconnect::init(BIOS *bios, RAM *ram)
 }
 
 
+void Interconnect::store16(uint32_t address, uint16_t value)
+{
+    address = mask_region(address);
+
+    // Unaligned memory access should be handled differently
+    if (address % 2 != 0) {
+        error("Unaligned store16 at 0x%08x\n", address);
+        exit(1);
+    }
+
+    error("Unhandled store16 at 0x%08x\n", address);
+}
+
+
 void Interconnect::store32(uint32_t address, uint32_t value)
 {
+    address = mask_region(address);
+
     // Unaligned memory access should be handled differently
     if (address % 4 != 0) {
         error("Unaligned store32 at 0x%08x\n", address);
@@ -56,8 +92,8 @@ void Interconnect::store32(uint32_t address, uint32_t value)
     }
 
     // Is it mapped to EXPANSION 1 or 2 ?
-    else if (in_range(address, MEM_CONTROL_START, MEM_CONTROL_SIZE)) {
-        uint32_t offset = address - MEM_CONTROL_START;
+    else if (in_range(address, SYS_CONTROL_START, SYS_CONTROL_SIZE)) {
+        uint32_t offset = address - SYS_CONTROL_START;
 
         switch(offset) {
         case 0:
@@ -100,6 +136,8 @@ void Interconnect::store32(uint32_t address, uint32_t value)
 
 uint32_t Interconnect::load32(uint32_t address)
 {
+    address = mask_region(address);
+
     // Unaligned memory access should be handled differently
     if (address % 4 != 0) {
         error("Unaligned load32 at 0x%08x\n", address);

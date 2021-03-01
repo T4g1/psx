@@ -19,6 +19,7 @@ public:
     ~Interconnect();
 
     bool init(BIOS *bios, RAM *ram);
+    void store16(uint32_t address, uint16_t value);
     void store32(uint32_t address, uint32_t value);
     uint32_t load32(uint32_t address);
 };

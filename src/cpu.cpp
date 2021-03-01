@@ -85,6 +85,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x29: SH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     default:
         error("Unhandled OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
@@ -244,6 +245,16 @@ void CPU::SW(size_t rs, size_t rt, uint32_t imm16_se)
     }
 
     inter->store32(get_reg(rs) + imm16_se, get_reg(rt));
+}
+
+void CPU::SH(size_t rs, size_t rt, uint32_t imm16_se)
+{
+    if (SR & SR_CACHE_ISOLATION) {
+        //debug("Ignoring store while cache is isolated\n");
+        return;
+    }
+
+    inter->store16(get_reg(rs) + imm16_se, (uint16_t) get_reg(rt));
 }
 
 

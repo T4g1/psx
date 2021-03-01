@@ -67,6 +67,7 @@ public:
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
     void SW(size_t rs, size_t rt, uint32_t imm16_se);
+    void SH(size_t rs, size_t rt, uint32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void ADDU(size_t rs, size_t rt, size_t rd);

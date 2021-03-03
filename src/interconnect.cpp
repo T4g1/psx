@@ -1,6 +1,7 @@
 #include "interconnect.h"
 
 #include "log.h"
+#include "spu.h"
 #include "bios.h"
 #include "ram.h"
 #include "common.h"
@@ -15,12 +16,16 @@
 #define RAM_SIZE_START          0x1F801060
 #define RAM_SIZE_SIZE           4
 
+#define SPU_START               0x1F801C00
+#define SPU_SIZE                640
+
 // KSEG2
 #define CACHE_CONTROL_START     0xFFFE0130
 #define CACHE_CONTROL_SIZE      4
 
-#define EXPANSION_1_BASE_ADDR   0x1F000000
-#define EXPANSION_2_BASE_ADDR   0x1F802000
+#define EXPANSION_1_START       0x1F000000
+#define EXPANSION_2_START       0x1F802000
+#define EXPANSION_2_SIZE        66
 
 
 const uint32_t REGION_MASK[] = {
@@ -46,12 +51,30 @@ Interconnect::~Interconnect()
 }
 
 
-bool Interconnect::init(BIOS *bios, RAM *ram)
+bool Interconnect::init(SPU *spu, BIOS *bios, RAM *ram)
 {
+    this->spu = spu;
     this->bios = bios;
     this->ram = ram;
 
     return true;
+}
+
+
+void Interconnect::store8(uint32_t address, uint8_t value)
+{
+    address = mask_region(address);
+
+    // Is it mapped to EXPANSION 2 ?
+    if (in_range(address, EXPANSION_2_START, EXPANSION_2_SIZE)) {
+        uint32_t offset = address - EXPANSION_2_START;
+
+        error("Unhandled store8 to EXPANSION 2 register: 0x%08x: 0x%02x\n", offset, value);
+    }
+
+    else {
+        error("Unhandled store8 at 0x%08x\n", address);
+    }
 }
 
 
@@ -65,7 +88,16 @@ void Interconnect::store16(uint32_t address, uint16_t value)
         exit(1);
     }
 
-    error("Unhandled store16 at 0x%08x\n", address);
+    // Is it mapped to SPU ?
+    if (in_range(address, SPU_START, SPU_SIZE)) {
+        uint32_t offset = address - SPU_START;
+
+        error("Unhandled store16 to SPU register: 0x%08x: 0x%04x\n", offset, value);
+    }
+
+    else {
+        error("Unhandled store16 at 0x%08x\n", address);
+    }
 }
 
 
@@ -97,19 +129,19 @@ void Interconnect::store32(uint32_t address, uint32_t value)
 
         switch(offset) {
         case 0:
-            if (value != EXPANSION_1_BASE_ADDR) {
+            if (value != EXPANSION_1_START) {
                 error("Bad expansion 1 base address 0x%08x\n", value);
                 exit(1);
             }
             break;
         case 4:
-            if (value != EXPANSION_2_BASE_ADDR) {
+            if (value != EXPANSION_2_START) {
                 error("Bad expansion 2 base address 0x%08x\n", value);
                 exit(1);
             }
             break;
         default:
-            error("Unhandled write to MEM_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
+            error("Unhandled store32 to MEM_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
             //exit(1);
             break;
         }
@@ -118,13 +150,13 @@ void Interconnect::store32(uint32_t address, uint32_t value)
     // RAM_SIZE for RAM configuration
     else if (in_range(address, RAM_SIZE_START, RAM_SIZE_SIZE)) {
         uint32_t offset = address - RAM_SIZE_START;
-        error("Unhandled write to RAM_SIZE register: 0x%08x: 0x%08x\n", offset, value);
+        error("Unhandled store32 to RAM_SIZE register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     // CACHE_CONTROL register
     else if (in_range(address, CACHE_CONTROL_START, CACHE_CONTROL_SIZE)) {
         uint32_t offset = address - CACHE_CONTROL_START;
-        error("Unhandled write to CACHE_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
+        error("Unhandled store32 to CACHE_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     else {

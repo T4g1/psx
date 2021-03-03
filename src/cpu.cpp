@@ -74,18 +74,21 @@ void CPU::decode_and_execute(uint32_t data)
     switch(opcode) {
     case 0x00: SPECIAL(data); break;
     case 0x02: J(get_imm26(data)); break;
+    case 0x03: JAL(get_imm26(data)); break;
     case 0x05: BNE(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x08: ADDI(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x09: ADDIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x0C: ANDI(get_rs(data), get_rt(data), get_imm16(data)); break;
+    case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
+    case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x10: COP0(data); break;
     case 0x11: COP1(data); break;
     case 0x12: COP2(data); break;
     case 0x13: COP3(data); break;
     case 0x23: LW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
-    case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
-    case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
-    case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x28: SB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x29: SH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     default:
         error("Unhandled OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
@@ -143,11 +146,12 @@ void CPU::SPECIAL(uint32_t data)
 
     switch(opcode) {
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x08: JR(get_rs(data)); break;
     case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
-        error("Unhandled SECONDARY OPCODE: 0x%02x", opcode);
+        error("Unhandled SECONDARY OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
     }
 }
@@ -155,6 +159,13 @@ void CPU::SPECIAL(uint32_t data)
 void CPU::J(uint32_t imm26)
 {
     PC = (PC & 0xF0000000) | (imm26 << 2);
+}
+
+void CPU::JAL(uint32_t imm26)
+{
+    set_reg(RA, PC);
+
+    J(imm26);
 }
 
 void CPU::BNE(size_t rs, size_t rt, uint32_t imm16_se)
@@ -183,6 +194,11 @@ void CPU::ADDI(size_t rs, size_t rt, uint32_t imm16_se)
     else {
         set_reg(rt, result);
     }
+}
+
+void CPU::ANDI(size_t rs, size_t rt, uint32_t imm16)
+{
+    set_reg(rt, get_reg(rs) & imm16);
 }
 
 void CPU::COP0(uint32_t data)
@@ -240,7 +256,7 @@ void CPU::LUI(size_t rt, uint16_t imm16)
 void CPU::SW(size_t rs, size_t rt, uint32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring store while cache is isolated\n");
+        //debug("Ignoring store32 while cache is isolated\n");
         return;
     }
 
@@ -250,11 +266,21 @@ void CPU::SW(size_t rs, size_t rt, uint32_t imm16_se)
 void CPU::SH(size_t rs, size_t rt, uint32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring store while cache is isolated\n");
+        //debug("Ignoring store16 while cache is isolated\n");
         return;
     }
 
     inter->store16(get_reg(rs) + imm16_se, (uint16_t) get_reg(rt));
+}
+
+void CPU::SB(size_t rs, size_t rt, uint32_t imm16_se)
+{
+    if (SR & SR_CACHE_ISOLATION) {
+        //debug("Ignoring store8 while cache is isolated\n");
+        return;
+    }
+
+    inter->store8(get_reg(rs) + imm16_se, (uint8_t) get_reg(rt));
 }
 
 
@@ -267,6 +293,11 @@ void CPU::SH(size_t rs, size_t rt, uint32_t imm16_se)
 void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
 {
     set_reg(rd, get_reg(rt) << imm5);
+}
+
+void CPU::JR(size_t rs)
+{
+    PC = get_reg(rs);
 }
 
 void CPU::ADDU(size_t rs, size_t rt, size_t rd)

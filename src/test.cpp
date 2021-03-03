@@ -6,6 +6,7 @@
 #include "instruction.h"
 #include "log.h"
 #include "cpu.h"
+#include "spu.h"
 #include "bios.h"
 #include "ram.h"
 #include "interconnect.h"
@@ -13,6 +14,7 @@
 
 std::string bios_path = "";
 CPU *cpu;
+SPU *spu;
 BIOS *bios;
 RAM *ram;
 Interconnect *inter;
@@ -27,15 +29,17 @@ void show_usage()
 bool test_init()
 {
     cpu = new CPU();
+    spu = new SPU();
     bios = new BIOS();
     ram = new RAM();
     inter = new Interconnect();
 
     bool running = true;
     running &= cpu->init();
+    running &= spu->init();
     running &= bios->init(bios_path);
     running &= ram->init();
-    running &= inter->init(bios, ram);
+    running &= inter->init(spu, bios, ram);
 
     if (running) {
         cpu->set_inter(inter);

@@ -5,6 +5,7 @@
 #include <string>
 
 class CPU;
+class SPU;
 class BIOS;
 class RAM;
 class Interconnect;
@@ -15,6 +16,7 @@ class Interconnect;
  */
 class PSX {
     CPU *cpu;
+    SPU *spu;
     BIOS *bios;
     RAM *ram;
     Interconnect *inter;

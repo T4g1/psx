@@ -8,6 +8,7 @@
 #define DEFAULT_PC          0xBFC00000
 #define DEFAULT_REG         0xDEADBEEF
 #define REG_COUNT           32
+#define RA                  31  // Return address
 
 class Interconnect;
 
@@ -56,9 +57,11 @@ public:
 
     void SPECIAL(uint32_t data);
     void J(uint32_t imm26);
+    void JAL(uint32_t imm26);
     void BNE(size_t rs, size_t rt, uint32_t imm16_se);
     void ADDI(size_t rs, size_t rt, uint32_t imm16_se);
     void ADDIU(size_t rs, size_t rt, uint32_t imm16_se);
+    void ANDI(size_t rs, size_t rt, uint32_t imm16);
     void COP0(uint32_t data);
     void COP1(uint32_t data);
     void COP2(uint32_t data);
@@ -68,8 +71,10 @@ public:
     void LUI(size_t rt, uint16_t imm16);
     void SW(size_t rs, size_t rt, uint32_t imm16_se);
     void SH(size_t rs, size_t rt, uint32_t imm16_se);
+    void SB(size_t rs, size_t rt, uint32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
+    void JR(size_t rs);
     void ADDU(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);

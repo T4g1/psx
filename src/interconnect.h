@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+class SPU;
 class BIOS;
 class RAM;
 
@@ -12,13 +13,15 @@ class RAM;
  * Dispatch read/write request to correct modules and/or memory
  */
 class Interconnect {
+    SPU *spu;
     BIOS *bios;
     RAM *ram;
 
 public:
     ~Interconnect();
 
-    bool init(BIOS *bios, RAM *ram);
+    bool init(SPU *spu, BIOS *bios, RAM *ram);
+    void store8(uint32_t address, uint8_t value);
     void store16(uint32_t address, uint16_t value);
     void store32(uint32_t address, uint32_t value);
     uint32_t load32(uint32_t address);

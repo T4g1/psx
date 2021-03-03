@@ -43,6 +43,7 @@ public:
 
     bool init();
     void reset();
+    void run_load();
     void run_next();
     void decode_and_execute(uint32_t data);
 
@@ -75,14 +76,16 @@ public:
     void COP3(uint32_t data);
     void LB(size_t rs, size_t rt, int32_t imm16_se);
     void LW(size_t rs, size_t rt, int32_t imm16_se);
+    void LBU(size_t rs, size_t rt, int32_t imm16_se);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
-    void SW(size_t rs, size_t rt, int32_t imm16_se);
-    void SH(size_t rs, size_t rt, int32_t imm16_se);
     void SB(size_t rs, size_t rt, int32_t imm16_se);
+    void SH(size_t rs, size_t rt, int32_t imm16_se);
+    void SW(size_t rs, size_t rt, int32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void JR(size_t rs);
+    void JALR(size_t rs, size_t rd);
     void ADD(size_t rs, size_t rt, size_t rd);
     void ADDU(size_t rs, size_t rt, size_t rd);
     void AND(size_t rs, size_t rt, size_t rd);

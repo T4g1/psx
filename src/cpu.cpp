@@ -44,6 +44,16 @@ void CPU::reset()
     LO = DEFAULT_REG;
 }
 
+/**
+ * @brief      Exceture pending load if any
+ */
+void CPU::run_load()
+{
+    // Execute pending load
+    set_reg(load_reg, load_value);
+    load_reg = 0;
+}
+
 void CPU::run_next()
 {
     uint32_t instruction = next_instruction;
@@ -52,9 +62,7 @@ void CPU::run_next()
 
     PC += INSTRUCTION_LENGTH;
 
-    // Execute pending load
-    set_reg(load_reg, load_value);
-    load_reg = 0;
+    run_load();
 
     decode_and_execute(instruction);
 
@@ -87,6 +95,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x13: COP3(data); break;
     case 0x20: LB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x23: LW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x24: LBU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x28: SB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x29: SH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -161,6 +170,7 @@ void CPU::SPECIAL(uint32_t data)
     switch(opcode) {
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
     case 0x08: JR(get_rs(data)); break;
+    case 0x09: JALR(get_rs(data), get_rd(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x24: AND(get_rs(data), get_rt(data), get_rd(data)); break;
@@ -276,7 +286,7 @@ void CPU::LB(size_t rs, size_t rt, int32_t imm16_se)
         return;
     }
 
-    // Cast for signe extension
+    // Cast for sign extension
     int8_t value = (int8_t)inter->load8(get_reg(rs) + imm16_se);
 
     // Create a pending load
@@ -294,6 +304,18 @@ void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
     // Create a pending load
     load_reg = rt;
     load_value = inter->load32(get_reg(rs) + imm16_se);
+}
+
+void CPU::LBU(size_t rs, size_t rt, int32_t imm16_se)
+{
+    if (SR & SR_CACHE_ISOLATION) {
+        //debug("Ignoring load while cache is isolated\n");
+        return;
+    }
+
+    // Create a pending load
+    load_reg = rt;
+    load_value = (uint32_t) inter->load8(get_reg(rs) + imm16_se);
 }
 
 void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
@@ -351,6 +373,13 @@ void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
 void CPU::JR(size_t rs)
 {
     PC = get_reg(rs);
+}
+
+void CPU::JALR(size_t rs, size_t rd)
+{
+    set_reg(rd, PC);
+
+    JR(rs);
 }
 
 void CPU::ADD(size_t rs, size_t rt, size_t rd)

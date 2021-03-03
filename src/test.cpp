@@ -143,6 +143,27 @@ bool test_ORI()
     return true;
 }
 
+bool test_store_load()
+{
+    cpu->reset();
+    cpu->force_set_reg(1, 0x000000FF);
+
+    cpu->SB(0, 1, 0x00000000);
+    ASSERT(ram->load8(0x00000000) == 0xFF);
+
+    cpu->LB(0, 1, 0x00000000);
+    cpu->run_load();
+    ASSERT((int32_t) cpu->force_get_reg(1) == -1);
+    ASSERT((int32_t) cpu->force_get_reg(1) == (int32_t) 0xFFFFFFFF);
+
+    cpu->LBU(0, 1, 0x00000000);
+    cpu->run_load();
+    ASSERT((int32_t) cpu->force_get_reg(1) == 255);
+    ASSERT((int32_t) cpu->force_get_reg(1) == (int32_t) 0x000000FF);
+
+    return true;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -169,6 +190,7 @@ int main(int argc, char *argv[])
     test("CPU: ADDI", &test_ADDI);
     test("CPU: ADDIU", &test_ADDIU);
     test("CPU: ORI", &test_ORI);
+    test("CPU: Store/Load", &test_store_load);
 
     return EXIT_SUCCESS;
 }

@@ -24,6 +24,11 @@
 #define CACHE_CONTROL_SIZE      4
 
 #define EXPANSION_1_START       0x1F000000
+#define EXPANSION_1_SIZE        8192 * 1024
+
+#define IRQ_CONTROL_START       0x1F801070
+#define IRQ_CONTROL_SIZE        8
+
 #define EXPANSION_2_START       0x1F802000
 #define EXPANSION_2_SIZE        66
 
@@ -65,8 +70,13 @@ void Interconnect::store8(uint32_t address, uint8_t value)
 {
     address = mask_region(address);
 
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        ram->store8(address - RAM_START, value);
+    }
+
     // Is it mapped to EXPANSION 2 ?
-    if (in_range(address, EXPANSION_2_START, EXPANSION_2_SIZE)) {
+    else if (in_range(address, EXPANSION_2_START, EXPANSION_2_SIZE)) {
         uint32_t offset = address - EXPANSION_2_START;
 
         error("Unhandled store8 to EXPANSION 2 register: 0x%08x: 0x%02x\n", offset, value);
@@ -159,8 +169,40 @@ void Interconnect::store32(uint32_t address, uint32_t value)
         error("Unhandled store32 to CACHE_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
     }
 
+    // IRQ_CONTROL register
+    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
+        uint32_t offset = address - IRQ_CONTROL_START;
+        error("Unhandled store32 to IRQ_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
+    }
+
     else {
         error("Unhandled store32 at 0x%08x\n", address);
+        exit(1);
+    }
+}
+
+
+uint8_t Interconnect::load8(uint32_t address)
+{
+    address = mask_region(address);
+
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        return ram->load8(address - RAM_START);
+    }
+
+    // Is it mapped to BIOS ?
+    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
+        return bios->load8(address - BIOS_START);
+    }
+
+    // Is it mapped to EXPANSION 1 ?
+    else if (in_range(address, EXPANSION_1_START, EXPANSION_1_SIZE)) {
+        return 0xFF;
+    }
+
+    else {
+        error("Unhandled load8 at 0x%08x\n", address);
         exit(1);
     }
 }
@@ -175,8 +217,6 @@ uint32_t Interconnect::load32(uint32_t address)
         error("Unaligned load32 at 0x%08x\n", address);
         exit(1);
     }
-
-    //debug("[MEM] Load from: 0x%08x\n", address);
 
     // Is it mapped to RAM ?
     if (in_range(address, RAM_START, RAM_SIZE)) {

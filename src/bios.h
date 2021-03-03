@@ -20,6 +20,7 @@ public:
     bool load_bios(std::string path);
 
     void store32(uint32_t address, uint32_t value);
+    uint8_t load8(uint32_t address);
     uint32_t load32(uint32_t address);
 };
 

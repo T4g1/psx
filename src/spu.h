@@ -1,9 +1,6 @@
 #ifndef SPU_H
 #define SPU_H
 
-#define SPU_START               0x1F801C00
-#define SPU_SIZE                640
-
 
 /**
  * @brief      Sound Processing Unit

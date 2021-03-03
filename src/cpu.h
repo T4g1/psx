@@ -53,32 +53,43 @@ public:
     uint32_t get_reg(size_t index);
     void set_reg(size_t index, uint32_t value);
 
+    // TESTS
+    uint32_t force_get_reg(size_t index);
+    void force_set_reg(size_t index, uint32_t value);
+
     void branch(uint32_t offset);
 
     void SPECIAL(uint32_t data);
     void J(uint32_t imm26);
     void JAL(uint32_t imm26);
-    void BNE(size_t rs, size_t rt, uint32_t imm16_se);
-    void ADDI(size_t rs, size_t rt, uint32_t imm16_se);
-    void ADDIU(size_t rs, size_t rt, uint32_t imm16_se);
+    void BEQ(size_t rs, size_t rt, int32_t imm16_se);
+    void BNE(size_t rs, size_t rt, int32_t imm16_se);
+    void BLEZ(size_t rs, int32_t imm16_se);
+    void BGTZ(size_t rs, int32_t imm16_se);
+    void ADDI(size_t rs, size_t rt, int32_t imm16_se);
+    void ADDIU(size_t rs, size_t rt, int32_t imm16_se);
     void ANDI(size_t rs, size_t rt, uint32_t imm16);
     void COP0(uint32_t data);
     void COP1(uint32_t data);
     void COP2(uint32_t data);
     void COP3(uint32_t data);
-    void LW(size_t rs, size_t rt, uint32_t imm16_se);
+    void LB(size_t rs, size_t rt, int32_t imm16_se);
+    void LW(size_t rs, size_t rt, int32_t imm16_se);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
-    void SW(size_t rs, size_t rt, uint32_t imm16_se);
-    void SH(size_t rs, size_t rt, uint32_t imm16_se);
-    void SB(size_t rs, size_t rt, uint32_t imm16_se);
+    void SW(size_t rs, size_t rt, int32_t imm16_se);
+    void SH(size_t rs, size_t rt, int32_t imm16_se);
+    void SB(size_t rs, size_t rt, int32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void JR(size_t rs);
+    void ADD(size_t rs, size_t rt, size_t rd);
     void ADDU(size_t rs, size_t rt, size_t rd);
+    void AND(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);
 
+    void MFC0(size_t rt, size_t rd);
     void MTC0(size_t rt, size_t rd);
 };
 

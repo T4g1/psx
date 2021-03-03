@@ -46,6 +46,12 @@ void BIOS::store32(uint32_t address, uint32_t value)
 }
 
 
+uint8_t BIOS::load8(uint32_t address)
+{
+    return data[address];
+}
+
+
 /**
  * @brief      Loads a 32.bit data at the given address
  * @param[in]  address  The address

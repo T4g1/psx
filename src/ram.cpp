@@ -24,12 +24,24 @@ bool RAM::init()
 }
 
 
+void RAM::store8(uint32_t address, uint8_t value)
+{
+    data[address] = value;
+}
+
+
 void RAM::store32(uint32_t address, uint32_t value)
 {
     data[address + 0] = extract(value, 0, 8);
     data[address + 1] = extract(value, 8, 8);
     data[address + 2] = extract(value, 16, 8);
     data[address + 3] = extract(value, 24, 8);
+}
+
+
+uint8_t RAM::load8(uint32_t address)
+{
+    return data[address];
 }
 
 

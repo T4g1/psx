@@ -55,11 +55,11 @@ uint16_t get_imm16(uint32_t instruction)
  * @brief      Same as get_imm16 but gets signed value
  * Signed value is the same a 16bit value but padded with MSB on the left
  */
-uint32_t get_imm16_se(uint32_t instruction)
+int32_t get_imm16_se(uint32_t instruction)
 {
-    int16_t value = extract(instruction, 0, 16) & 0xFFFF;
+    int16_t value = get_imm16(instruction) & 0xFFFF;
 
-    return (uint32_t)value;
+    return (int32_t) value;
 }
 
 

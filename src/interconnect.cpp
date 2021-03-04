@@ -29,6 +29,9 @@
 #define IRQ_CONTROL_START       0x1F801070
 #define IRQ_CONTROL_SIZE        8
 
+#define TIMERS_START            0x1F801100
+#define TIMERS_SIZE             16 * 3 // 3 timers
+
 #define EXPANSION_2_START       0x1F802000
 #define EXPANSION_2_SIZE        66
 
@@ -84,6 +87,7 @@ void Interconnect::store8(uint32_t address, uint8_t value)
 
     else {
         error("Unhandled store8 at 0x%08x\n", address);
+        exit(1);
     }
 }
 
@@ -105,8 +109,16 @@ void Interconnect::store16(uint32_t address, uint16_t value)
         error("Unhandled store16 to SPU register: 0x%08x: 0x%04x\n", offset, value);
     }
 
+    // Is it mapped to TIMERS ?
+    else if (in_range(address, TIMERS_START, TIMERS_SIZE)) {
+        uint32_t offset = address - TIMERS_START;
+
+        error("Unhandled store16 to TIMERS register: 0x%08x: 0x%04x\n", offset, value);
+    }
+
     else {
         error("Unhandled store16 at 0x%08x\n", address);
+        exit(1);
     }
 }
 
@@ -226,6 +238,13 @@ uint32_t Interconnect::load32(uint32_t address)
     // Is it mapped to BIOS ?
     else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         return bios->load32(address - BIOS_START);
+    }
+
+    // IRQ_CONTROL register
+    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
+        uint32_t offset = address - IRQ_CONTROL_START;
+        error("Unhandled load32 to IRQ_CONTROL register: 0x%08x\n", offset);
+        return 0;
     }
 
     else {

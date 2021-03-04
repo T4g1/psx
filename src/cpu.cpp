@@ -9,8 +9,8 @@
 
 #define SR_CACHE_ISOLATION          0x010000
 
-#define BcondZ_BGEZ_MASK            0b10000
-#define BcondZ_LINK_MASK            0b00001
+#define BcondZ_BGEZ_MASK            0b00001
+#define BcondZ_LINK_MASK            0b10000
 
 
 CPU::~CPU()
@@ -75,7 +75,8 @@ void CPU::run_next()
 
 void CPU::decode_and_execute(uint32_t data)
 {
-    //debug("[CPU] PC: 0x%08x Instruction: 0x%08x\n", PC, data);
+    //debug("[CPU] PC: 0x%08x Instruction: 0x%08x ", PC, data);
+    //decode(data);
 
     uint8_t opcode = get_primary_opcode(data);
 
@@ -208,6 +209,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x23: SUBU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x24: AND(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x2A: SLT(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
         error("Unhandled SECONDARY OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
@@ -220,8 +222,7 @@ void CPU::BcondZ(size_t rs, size_t rt, int32_t imm16_se)
     bool isBGEZ = rt & BcondZ_BGEZ_MASK;
     bool isLink = rt & BcondZ_LINK_MASK;
 
-    int32_t value = (int32_t) get_reg(rs);
-    bool test = (value < 0);
+    bool test = (get_reg_se(rs) < 0);
     if (isBGEZ) {
         test = !test;
     }
@@ -540,6 +541,11 @@ void CPU::AND(size_t rs, size_t rt, size_t rd)
 void CPU::OR(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg(rs) | get_reg(rt));
+}
+
+void CPU::SLT(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg_se(rs) < get_reg_se(rt));
 }
 
 void CPU::SLTU(size_t rs, size_t rt, size_t rd)

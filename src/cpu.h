@@ -104,6 +104,7 @@ public:
     void SUBU(size_t rs, size_t rt, size_t rd);
     void AND(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
+    void SLT(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);
 
     void MFC0(size_t rt, size_t rd);

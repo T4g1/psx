@@ -186,6 +186,19 @@ bool test_DIV()
     return true;
 }
 
+bool test_SLT()
+{
+    cpu->reset();
+    cpu->force_set_reg(2, 0xFFFFFFFF);
+    cpu->force_set_reg(3, 0x00000002);
+
+    cpu->SLT(2, 3, 1);
+
+    ASSERT(cpu->force_get_reg(1) == 1);
+
+    return true;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -214,6 +227,7 @@ int main(int argc, char *argv[])
     test("CPU: ORI", &test_ORI);
     test("CPU: Store/Load", &test_store_load);
     test("CPU: DIV", &test_DIV);
+    test("CPU: SLT", &test_SLT);
 
     return EXIT_SUCCESS;
 }

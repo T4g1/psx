@@ -17,6 +17,7 @@ SOURCES  := $(wildcard $(SRCDIR)/*.cpp) \
             $(wildcard lib/imgui/*.cpp)
 SOURCES  := $(filter-out $(SRCDIR)/main.cpp, $(SOURCES))
 SOURCES  := $(filter-out $(SRCDIR)/test.cpp, $(SOURCES))
+SOURCES  := $(filter-out $(SRCDIR)/tools.cpp, $(SOURCES))
 
 INCLUDES := -Ilib/imgui \
             -Ilib/imgui_club/ \
@@ -32,11 +33,12 @@ OBJECTS       := $(patsubst %.cpp, %.o, $(SOURCES))
 OBJECTS_C     := lib/gl3w/GL/gl3w.o
 PSX_OBJECTS   := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/main.o
 TEST_OBJECTS  := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/test.o
+TOOLS_OBJECTS  := $(OBJECTS) $(OBJECTS_C) $(OBJDIR)/tools.o
 
 debug: CXXFLAGS += -DDEBUG
 debug: all
 
-all: psx test
+all: psx test tools
 
 psx: CXXFLAGS +=
 psx: $(PSX_OBJECTS)
@@ -47,6 +49,11 @@ test: CXXFLAGS +=
 test: $(TEST_OBJECTS)
 	$(LINKER) $(TEST_OBJECTS) $(LFLAGS) -o $@
 	@echo "Linking test complete!"
+
+tools: CXXFLAGS +=
+tools: $(TOOLS_OBJECTS)
+	$(LINKER) $(TOOLS_OBJECTS) $(LFLAGS) -o $@
+	@echo "Linking tools complete!"
 
 $(OBJECTS): %.o : %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@

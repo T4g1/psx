@@ -16,4 +16,6 @@ int32_t get_imm16_se(uint32_t instruction);
 uint32_t get_imm26(uint32_t instruction);
 uint32_t get_comment(uint32_t instruction);
 
+void decode(uint32_t data);
+
 #endif /* INSTRUCTION_H */

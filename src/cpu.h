@@ -61,6 +61,7 @@ public:
     void branch(uint32_t offset);
 
     void SPECIAL(uint32_t data);
+    void BcondZ(size_t rs, size_t rt, int32_t imm16_se);
     void J(uint32_t imm26);
     void JAL(uint32_t imm26);
     void BEQ(size_t rs, size_t rt, int32_t imm16_se);
@@ -69,7 +70,10 @@ public:
     void BGTZ(size_t rs, int32_t imm16_se);
     void ADDI(size_t rs, size_t rt, int32_t imm16_se);
     void ADDIU(size_t rs, size_t rt, int32_t imm16_se);
+    void SLTI(size_t rs, size_t rt, int32_t imm16_se);
     void ANDI(size_t rs, size_t rt, uint32_t imm16);
+    void ORI(size_t rs, size_t rt, uint16_t imm16);
+    void LUI(size_t rt, uint16_t imm16);
     void COP0(uint32_t data);
     void COP1(uint32_t data);
     void COP2(uint32_t data);
@@ -77,8 +81,6 @@ public:
     void LB(size_t rs, size_t rt, int32_t imm16_se);
     void LW(size_t rs, size_t rt, int32_t imm16_se);
     void LBU(size_t rs, size_t rt, int32_t imm16_se);
-    void ORI(size_t rs, size_t rt, uint16_t imm16);
-    void LUI(size_t rt, uint16_t imm16);
     void SB(size_t rs, size_t rt, int32_t imm16_se);
     void SH(size_t rs, size_t rt, int32_t imm16_se);
     void SW(size_t rs, size_t rt, int32_t imm16_se);
@@ -88,6 +90,7 @@ public:
     void JALR(size_t rs, size_t rd);
     void ADD(size_t rs, size_t rt, size_t rd);
     void ADDU(size_t rs, size_t rt, size_t rd);
+    void SUBU(size_t rs, size_t rt, size_t rd);
     void AND(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);

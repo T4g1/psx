@@ -9,6 +9,9 @@
 
 #define SR_CACHE_ISOLATION          0x010000
 
+#define BcondZ_BGEZ_MASK            0b10000
+#define BcondZ_LINK_MASK            0b00001
+
 
 CPU::~CPU()
 {
@@ -78,6 +81,7 @@ void CPU::decode_and_execute(uint32_t data)
 
     switch(opcode) {
     case 0x00: SPECIAL(data); break;
+    case 0x01: BcondZ(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x02: J(get_imm26(data)); break;
     case 0x03: JAL(get_imm26(data)); break;
     case 0x04: BEQ(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -86,6 +90,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x07: BGTZ(get_rs(data), get_imm16_se(data)); break;
     case 0x08: ADDI(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x09: ADDIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x0A: SLTI(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0C: ANDI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
@@ -152,7 +157,7 @@ void CPU::force_set_reg(size_t index, uint32_t value)
 
 void CPU::branch(uint32_t offset)
 {
-    PC += offset;
+    PC += (offset << 2);
     PC -= INSTRUCTION_LENGTH;   // Compensate for run_next
 }
 
@@ -173,12 +178,33 @@ void CPU::SPECIAL(uint32_t data)
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x23: SUBU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x24: AND(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
         error("Unhandled SECONDARY OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
+    }
+}
+
+void CPU::BcondZ(size_t rs, size_t rt, int32_t imm16_se)
+{
+    bool isBGEZ = rt & BcondZ_BGEZ_MASK;
+    bool isLink = rt & BcondZ_LINK_MASK;
+
+    int32_t value = (int32_t) get_reg(rs);
+    bool test = (value < 0);
+    if (isBGEZ) {
+        test = !test;
+    }
+
+    if (test) {
+        if (isLink) {
+            set_reg(RA, PC);
+        }
+
+        branch(imm16_se);
     }
 }
 
@@ -197,28 +223,28 @@ void CPU::JAL(uint32_t imm26)
 void CPU::BEQ(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (get_reg(rs) == get_reg(rt)) {
-        branch(imm16_se << 2);
+        branch(imm16_se);
     }
 }
 
 void CPU::BNE(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (get_reg(rs) != get_reg(rt)) {
-        branch(imm16_se << 2);
+        branch(imm16_se);
     }
 }
 
 void CPU::BLEZ(size_t rs, int32_t imm16_se)
 {
     if ((int32_t) get_reg(rs) <= 0) {
-        branch(imm16_se << 2);
+        branch(imm16_se);
     }
 }
 
 void CPU::BGTZ(size_t rs, int32_t imm16_se)
 {
     if ((int32_t) get_reg(rs) > 0) {
-        branch(imm16_se << 2);
+        branch(imm16_se);
     }
 }
 
@@ -241,6 +267,11 @@ void CPU::ADDI(size_t rs, size_t rt, int32_t imm16_se)
     else {
         set_reg(rt, result);
     }
+}
+
+void CPU::SLTI(size_t rs, size_t rt, int32_t imm16_se)
+{
+    set_reg(rt, (int32_t) get_reg(rs) < imm16_se);
 }
 
 void CPU::ANDI(size_t rs, size_t rt, uint32_t imm16)
@@ -400,6 +431,11 @@ void CPU::ADD(size_t rs, size_t rt, size_t rd)
 void CPU::ADDU(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg(rs) + get_reg(rt));
+}
+
+void CPU::SUBU(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg(rs) - get_reg(rt));
 }
 
 void CPU::AND(size_t rs, size_t rt, size_t rd)

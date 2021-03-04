@@ -10,6 +10,10 @@
 #define REG_COUNT           32
 #define RA                  31  // Return address
 
+#define BEV_MASK            0x00400000
+
+#define EXCEPTION_SYSCALL   0x8
+
 class Interconnect;
 
 
@@ -19,14 +23,14 @@ class Interconnect;
 class CPU {
     Interconnect *inter;
 
-    // Used to store next instructions so JUMPS behave correctly
-    uint32_t next_instruction;
-
     // Registers
     std::array<uint32_t, REG_COUNT> reg;
     uint32_t PC;
     uint32_t HI;
     uint32_t LO;
+
+    uint32_t currentPC;     // Set EPC for exceptions
+    uint32_t nextPC;
 
     // Emulates load delay: Contains output of current instructions
     std::array<uint32_t, REG_COUNT> out_reg;
@@ -37,6 +41,8 @@ class CPU {
 
     // COP0 registers
     uint32_t SR;
+    uint32_t CAUSE;         // cop0 13: Cause Register
+    uint32_t EPC;           // cop0 14: EPC
 
 public:
     ~CPU();
@@ -46,6 +52,9 @@ public:
     void run_load();
     void run_next();
     void decode_and_execute(uint32_t data);
+
+    void exception(uint32_t cause);
+    void branch(uint32_t offset);
 
     void set_inter(Interconnect* inter);
 
@@ -62,8 +71,7 @@ public:
     uint32_t get_HI();
     uint32_t get_LO();
 
-    void branch(uint32_t offset);
-
+    // CPU Opcodes
     void SPECIAL(uint32_t data);
     void BcondZ(size_t rs, size_t rt, int32_t imm16_se);
     void J(uint32_t imm26);
@@ -90,11 +98,13 @@ public:
     void SH(size_t rs, size_t rt, int32_t imm16_se);
     void SW(size_t rs, size_t rt, int32_t imm16_se);
 
+    // SPECIAL Opcodes
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void SRL(size_t rt, size_t rd, uint8_t imm5);
     void SRA(size_t rt, size_t rd, uint8_t imm5);
     void JR(size_t rs);
     void JALR(size_t rs, size_t rd);
+    void SYSCALL();
     void MFHI(size_t rd);
     void MFLO(size_t rd);
     void DIV(size_t rs, size_t rt);
@@ -107,6 +117,7 @@ public:
     void SLT(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);
 
+    // COP0 Opcodes
     void MFC0(size_t rt, size_t rd);
     void MTC0(size_t rt, size_t rd);
 };

@@ -116,7 +116,7 @@ void decode(uint32_t data)
     case 0x0B: info("SLTIU $rs%zu, $rt%zu, %d\n", get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0C: info("ANDI $rs%zu, $rt%zu, %d\n", get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0D: info("ORI $rs%zu, $rt%zu, %d\n", get_rs(data), get_rt(data), get_imm16(data)); break;
-    case 0x0F: info("LUI$rt%zu, %u\n", get_rt(data), get_imm16(data)); break;
+    case 0x0F: info("LUI $rt%zu, %u\n", get_rt(data), get_imm16(data)); break;
     case 0x10: info("TODO COP0\n"); break;
     case 0x11: info("TODO COP1\n"); break;
     case 0x12: info("TODO COP2\n"); break;

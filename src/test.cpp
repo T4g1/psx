@@ -199,7 +199,6 @@ bool test_SLT()
     return true;
 }
 
-
 int main(int argc, char *argv[])
 {
     info("PSX testing\n");

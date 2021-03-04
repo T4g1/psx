@@ -33,8 +33,6 @@ bool CPU::init()
  */
 void CPU::reset()
 {
-    next_instruction = 0x00000000;
-
     reg[0] = 0;
     out_reg[0] = 0;
     for (size_t i=1; i<REG_COUNT; i++) {
@@ -43,6 +41,7 @@ void CPU::reset()
     }
 
     PC = DEFAULT_PC;
+    nextPC = DEFAULT_PC + INSTRUCTION_LENGTH;
     HI = DEFAULT_REG;
     LO = DEFAULT_REG;
 }
@@ -59,11 +58,11 @@ void CPU::run_load()
 
 void CPU::run_next()
 {
-    uint32_t instruction = next_instruction;
+    uint32_t instruction = inter->load32(PC);
 
-    next_instruction = inter->load32(PC);
-
-    PC += INSTRUCTION_LENGTH;
+    currentPC = PC; // Used to set EPC in case of exception
+    PC = nextPC;
+    nextPC += INSTRUCTION_LENGTH;
 
     run_load();
 
@@ -112,6 +111,35 @@ void CPU::decode_and_execute(uint32_t data)
     }
 }
 
+void CPU::exception(uint32_t cause)
+{
+    // Handler depends on BEV bit in SR
+    uint32_t handler = 0x80000080;
+    if (SR & BEV_MASK) {
+        handler = 0xBFC00180;
+    }
+
+    // Last 6 bit of SR is three pairs of Interupt Enable/User mode bits
+    // They behave like a stack of 3 entries. They are pushed with two zero
+    // at each exception.
+    uint32_t mode = SR & 0x3F;  // Store last 6 bits of SR
+    SR &= ~0x3F;                // Clear 6 last bits
+    SR |= (mode << 2) & 0x3F;   // Shift mode and store back in SR
+
+    // CAUSE register updated with exception code (bits [6:2])
+    CAUSE = cause << 2;
+    EPC = currentPC;
+
+    // No delay slot for exceptions
+    PC = handler;
+    nextPC = PC + INSTRUCTION_LENGTH;
+}
+
+void CPU::branch(uint32_t offset)
+{
+    nextPC = PC + (offset << 2);
+}
+
 void CPU::set_inter(Interconnect* inter)
 {
     this->inter = inter;
@@ -120,6 +148,7 @@ void CPU::set_inter(Interconnect* inter)
 void CPU::display_registers()
 {
     debug("PC: 0x%08x ", PC);
+    debug("Next PC: 0x%08x ", nextPC);
     debug("HI: 0x%08x ", HI);
     debug("LO: 0x%08x\n", LO);
 
@@ -144,6 +173,13 @@ void CPU::set_reg(size_t index, uint32_t value)
     out_reg[0] = 0;
 }
 
+
+/******************************************************
+ *
+ * TESTS
+ *
+ ******************************************************/
+
 /**
  * @brief      Skip load delay (used for testing purposes)
  */
@@ -160,12 +196,6 @@ void CPU::force_set_reg(size_t index, uint32_t value)
 {
     set_reg(index, value);
     reg = out_reg;
-}
-
-void CPU::branch(uint32_t offset)
-{
-    PC += (offset << 2);
-    PC -= INSTRUCTION_LENGTH;   // Compensate for run_next
 }
 
 uint32_t CPU::get_PC()
@@ -200,6 +230,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x03: SRA(get_rt(data), get_rd(data), get_imm5(data)); break;
     case 0x08: JR(get_rs(data)); break;
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
+    case 0x0C: SYSCALL(); break;
     case 0x10: MFHI(get_rd(data)); break;
     case 0x12: MFLO(get_rd(data)); break;
     case 0x1A: DIV(get_rs(data), get_rt(data)); break;
@@ -229,7 +260,7 @@ void CPU::BcondZ(size_t rs, size_t rt, int32_t imm16_se)
 
     if (test) {
         if (isLink) {
-            set_reg(RA, PC);
+            set_reg(RA, nextPC);
         }
 
         branch(imm16_se);
@@ -238,12 +269,12 @@ void CPU::BcondZ(size_t rs, size_t rt, int32_t imm16_se)
 
 void CPU::J(uint32_t imm26)
 {
-    PC = (PC & 0xF0000000) | (imm26 << 2);
+    nextPC = (PC & 0xF0000000) | (imm26 << 2);
 }
 
 void CPU::JAL(uint32_t imm26)
 {
-    set_reg(RA, PC);
+    set_reg(RA, nextPC);
 
     J(imm26);
 }
@@ -446,14 +477,19 @@ void CPU::SRA(size_t rt, size_t rd, uint8_t imm5)
 
 void CPU::JR(size_t rs)
 {
-    PC = get_reg(rs);
+    nextPC = get_reg(rs);
 }
 
 void CPU::JALR(size_t rs, size_t rd)
 {
-    set_reg(rd, PC);
+    set_reg(rd, nextPC);
 
     JR(rs);
+}
+
+void CPU::SYSCALL()
+{
+    exception(EXCEPTION_SYSCALL);
 }
 
 void CPU::MFHI(size_t rd)
@@ -566,12 +602,9 @@ void CPU::MFC0(size_t rt, size_t rd)
     load_reg = rt;
 
     switch(rd) {
-    case 12:
-        load_value = SR;
-        break;
-    case 13:
-        error("Unhandled read COP0 CAUSE\n");
-        exit(1);
+    case 12: load_value = SR; break;
+    case 13: load_value = CAUSE; break;
+    case 14: load_value = EPC; break;
     default:
         error("Unhandled read COP0 register: %zu\n", rd);
         exit(1);

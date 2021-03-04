@@ -52,11 +52,15 @@ public:
     void display_registers();
 
     uint32_t get_reg(size_t index);
+    int32_t get_reg_se(size_t index);
     void set_reg(size_t index, uint32_t value);
 
     // TESTS
     uint32_t force_get_reg(size_t index);
     void force_set_reg(size_t index, uint32_t value);
+    uint32_t get_PC();
+    uint32_t get_HI();
+    uint32_t get_LO();
 
     void branch(uint32_t offset);
 
@@ -71,6 +75,7 @@ public:
     void ADDI(size_t rs, size_t rt, int32_t imm16_se);
     void ADDIU(size_t rs, size_t rt, int32_t imm16_se);
     void SLTI(size_t rs, size_t rt, int32_t imm16_se);
+    void SLTIU(size_t rs, size_t rt, int32_t imm16_se);
     void ANDI(size_t rs, size_t rt, uint32_t imm16);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
@@ -86,8 +91,14 @@ public:
     void SW(size_t rs, size_t rt, int32_t imm16_se);
 
     void SLL(size_t rt, size_t rd, uint8_t imm5);
+    void SRL(size_t rt, size_t rd, uint8_t imm5);
+    void SRA(size_t rt, size_t rd, uint8_t imm5);
     void JR(size_t rs);
     void JALR(size_t rs, size_t rd);
+    void MFHI(size_t rd);
+    void MFLO(size_t rd);
+    void DIV(size_t rs, size_t rt);
+    void DIVU(size_t rs, size_t rt);
     void ADD(size_t rs, size_t rt, size_t rd);
     void ADDU(size_t rs, size_t rt, size_t rd);
     void SUBU(size_t rs, size_t rt, size_t rd);

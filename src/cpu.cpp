@@ -91,6 +91,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x08: ADDI(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x09: ADDIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0A: SLTI(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x0B: SLTIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0C: ANDI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
@@ -131,6 +132,11 @@ uint32_t CPU::get_reg(size_t index)
     return reg[index];
 }
 
+int32_t CPU::get_reg_se(size_t index)
+{
+    return (int32_t) reg[index];
+}
+
 void CPU::set_reg(size_t index, uint32_t value)
 {
     out_reg[index] = value;
@@ -161,6 +167,21 @@ void CPU::branch(uint32_t offset)
     PC -= INSTRUCTION_LENGTH;   // Compensate for run_next
 }
 
+uint32_t CPU::get_PC()
+{
+    return PC;
+}
+
+uint32_t CPU::get_HI()
+{
+    return HI;
+}
+
+uint32_t CPU::get_LO()
+{
+    return LO;
+}
+
 
 /******************************************************
  *
@@ -174,8 +195,14 @@ void CPU::SPECIAL(uint32_t data)
 
     switch(opcode) {
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x02: SRL(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x03: SRA(get_rt(data), get_rd(data), get_imm5(data)); break;
     case 0x08: JR(get_rs(data)); break;
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
+    case 0x10: MFHI(get_rd(data)); break;
+    case 0x12: MFLO(get_rd(data)); break;
+    case 0x1A: DIV(get_rs(data), get_rt(data)); break;
+    case 0x1B: DIVU(get_rs(data), get_rt(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x23: SUBU(get_rs(data), get_rt(data), get_rd(data)); break;
@@ -271,7 +298,12 @@ void CPU::ADDI(size_t rs, size_t rt, int32_t imm16_se)
 
 void CPU::SLTI(size_t rs, size_t rt, int32_t imm16_se)
 {
-    set_reg(rt, (int32_t) get_reg(rs) < imm16_se);
+    set_reg(rt, get_reg_se(rs) < imm16_se);
+}
+
+void CPU::SLTIU(size_t rs, size_t rt, int32_t imm16_se)
+{
+    set_reg(rt, get_reg(rs) < (uint32_t) imm16_se);
 }
 
 void CPU::ANDI(size_t rs, size_t rt, uint32_t imm16)
@@ -401,6 +433,16 @@ void CPU::SLL(size_t rt, size_t rd, uint8_t imm5)
     set_reg(rd, get_reg(rt) << imm5);
 }
 
+void CPU::SRL(size_t rt, size_t rd, uint8_t imm5)
+{
+    set_reg(rd, get_reg(rt) >> imm5);
+}
+
+void CPU::SRA(size_t rt, size_t rd, uint8_t imm5)
+{
+    set_reg(rd, get_reg_se(rt) >> imm5);
+}
+
 void CPU::JR(size_t rs)
 {
     PC = get_reg(rs);
@@ -411,6 +453,58 @@ void CPU::JALR(size_t rs, size_t rd)
     set_reg(rd, PC);
 
     JR(rs);
+}
+
+void CPU::MFHI(size_t rd)
+{
+    set_reg(rd, HI);
+}
+
+void CPU::MFLO(size_t rd)
+{
+    set_reg(rd, LO);
+}
+
+void CPU::DIV(size_t rs, size_t rt)
+{
+    int32_t numerator = get_reg_se(rs);
+    int32_t denominator = get_reg_se(rt);
+
+    // Division by zero
+    if (denominator == 0) {
+        HI = numerator;
+
+        if (numerator >= 0) {
+            LO = 0xFFFFFFFF;
+        } else {
+            LO = 1;
+        }
+    }
+    // Result is not 32bit
+    else if (numerator == (int32_t) 0x80000000 && denominator == -1) {
+        HI = 0;
+        LO = 0x80000000;
+    }
+    else {
+        HI = (uint32_t)(numerator % denominator);
+        LO = (uint32_t)(numerator / denominator);
+    }
+}
+
+void CPU::DIVU(size_t rs, size_t rt)
+{
+    uint32_t numerator = get_reg(rs);
+    uint32_t denominator = get_reg(rt);
+
+    // Division by zero
+    if (denominator == 0) {
+        HI = numerator;
+        LO = 0xFFFFFFFF;
+    }
+    else {
+        HI = numerator % denominator;
+        LO = numerator / denominator;
+    }
 }
 
 void CPU::ADD(size_t rs, size_t rt, size_t rd)

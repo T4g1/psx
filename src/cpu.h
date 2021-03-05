@@ -12,7 +12,10 @@
 
 #define BEV_MASK            0x00400000
 
-#define EXCEPTION_SYSCALL   0x8
+#define EXCEPTION_LOAD_ADDRESS_ERROR        0x4
+#define EXCEPTION_STORE_ADDRESS_ERROR       0x5
+#define EXCEPTION_SYSCALL                   0x8
+#define EXCEPTION_OVERFLOW                  0xC
 
 class Interconnect;
 
@@ -31,6 +34,9 @@ class CPU {
 
     uint32_t currentPC;     // Set EPC for exceptions
     uint32_t nextPC;
+
+    bool isBranch;          // True if we are branching
+    bool isDelaySlot;       // True if we are in a delay slot
 
     // Emulates load delay: Contains output of current instructions
     std::array<uint32_t, REG_COUNT> out_reg;
@@ -106,7 +112,9 @@ public:
     void JALR(size_t rs, size_t rd);
     void SYSCALL();
     void MFHI(size_t rd);
+    void MTHI(size_t rs);
     void MFLO(size_t rd);
+    void MTLO(size_t rs);
     void DIV(size_t rs, size_t rt);
     void DIVU(size_t rs, size_t rt);
     void ADD(size_t rs, size_t rt, size_t rd);
@@ -120,6 +128,7 @@ public:
     // COP0 Opcodes
     void MFC0(size_t rt, size_t rd);
     void MTC0(size_t rt, size_t rd);
+    void RFE();
 };
 
 #endif /* CPU_H */

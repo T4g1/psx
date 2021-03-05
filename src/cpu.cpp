@@ -44,6 +44,9 @@ void CPU::reset()
     nextPC = DEFAULT_PC + INSTRUCTION_LENGTH;
     HI = DEFAULT_REG;
     LO = DEFAULT_REG;
+
+    isBranch = false;
+    isDelaySlot = false;
 }
 
 /**
@@ -58,13 +61,22 @@ void CPU::run_load()
 
 void CPU::run_next()
 {
+    currentPC = PC; // Used to set EPC in case of exception
+    if (currentPC % 4 != 0) {
+        exception(EXCEPTION_LOAD_ADDRESS_ERROR);
+        return;
+    }
+
     uint32_t instruction = inter->load32(PC);
 
-    currentPC = PC; // Used to set EPC in case of exception
     PC = nextPC;
     nextPC += INSTRUCTION_LENGTH;
 
     run_load();
+
+    // If we where branching, then we are in the delay slot now
+    isDelaySlot = isBranch;
+    isBranch = false;
 
     decode_and_execute(instruction);
 
@@ -130,6 +142,13 @@ void CPU::exception(uint32_t cause)
     CAUSE = cause << 2;
     EPC = currentPC;
 
+    if (isDelaySlot) {
+        // Set bit 31 of cause and set EPC to the branch instruction
+        // when exception occurs during a delay slot
+        EPC -= INSTRUCTION_LENGTH;
+        CAUSE |= 1 << 31;
+    }
+
     // No delay slot for exceptions
     PC = handler;
     nextPC = PC + INSTRUCTION_LENGTH;
@@ -137,6 +156,7 @@ void CPU::exception(uint32_t cause)
 
 void CPU::branch(uint32_t offset)
 {
+    isBranch = true;
     nextPC = PC + (offset << 2);
 }
 
@@ -232,7 +252,9 @@ void CPU::SPECIAL(uint32_t data)
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
     case 0x0C: SYSCALL(); break;
     case 0x10: MFHI(get_rd(data)); break;
+    case 0x11: MTHI(get_rs(data)); break;
     case 0x12: MFLO(get_rd(data)); break;
+    case 0x13: MTLO(get_rs(data)); break;
     case 0x1A: DIV(get_rs(data), get_rt(data)); break;
     case 0x1B: DIVU(get_rs(data), get_rt(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
@@ -269,6 +291,7 @@ void CPU::BcondZ(size_t rs, size_t rt, int32_t imm16_se)
 
 void CPU::J(uint32_t imm26)
 {
+    isBranch = true;
     nextPC = (PC & 0xF0000000) | (imm26 << 2);
 }
 
@@ -307,11 +330,6 @@ void CPU::BGTZ(size_t rs, int32_t imm16_se)
     }
 }
 
-void CPU::ADDIU(size_t rs, size_t rt, int32_t imm16_se)
-{
-    set_reg(rt, get_reg(rs) + imm16_se);
-}
-
 void CPU::ADDI(size_t rs, size_t rt, int32_t imm16_se)
 {
     uint64_t extended_rs = 0xFFFFFFFF00000000 | get_reg(rs);
@@ -319,13 +337,17 @@ void CPU::ADDI(size_t rs, size_t rt, int32_t imm16_se)
 
     // Overflow!
     if ((result & 0xFFFFFFFF00000000) == 0) {
-        error("Unhandled ADDI overflow 0x%016" PRIx64 "\n", result);
-        exit(1);
+        exception(EXCEPTION_OVERFLOW);
     }
 
     else {
         set_reg(rt, result);
     }
+}
+
+void CPU::ADDIU(size_t rs, size_t rt, int32_t imm16_se)
+{
+    set_reg(rt, get_reg(rs) + imm16_se);
 }
 
 void CPU::SLTI(size_t rs, size_t rt, int32_t imm16_se)
@@ -345,13 +367,22 @@ void CPU::ANDI(size_t rs, size_t rt, uint32_t imm16)
 
 void CPU::COP0(uint32_t data)
 {
-    uint8_t opcode = get_cop_opcode(data);
+    uint8_t opcode = get_cop_opcode(data);              // Bits 25 - 21
+    uint8_t sec_opcode = get_secondary_opcode(data);    // Bits 5 - 0
 
     switch(opcode) {
     case 0b00000: MFC0(get_rt(data), get_rd(data)); break;
     case 0b00100: MTC0(get_rt(data), get_rd(data)); break;
+    case 0b10000:
+        switch(sec_opcode) {
+        case 0b010000: RFE(); break;
+        default:
+            error("Invalid COP0 Instruction: 0x%02x (inst: 0x%08x)\n", sec_opcode, data);
+            exit(1);
+        }
+        break;
     default:
-        error("Unhandled COP0 OPCODE: 0x%02x\n", opcode);
+        error("Unhandled COP0 OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
     }
 }
@@ -396,9 +427,14 @@ void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
         return;
     }
 
-    // Create a pending load
-    load_reg = rt;
-    load_value = inter->load32(get_reg(rs) + imm16_se);
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 4 != 0) {
+        exception(EXCEPTION_LOAD_ADDRESS_ERROR);
+    } else {
+        // Create a pending load
+        load_reg = rt;
+        load_value = inter->load32(address);
+    }
 }
 
 void CPU::LBU(size_t rs, size_t rt, int32_t imm16_se)
@@ -430,7 +466,12 @@ void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
         return;
     }
 
-    inter->store32(get_reg(rs) + imm16_se, get_reg(rt));
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 4 != 0) {
+        exception(EXCEPTION_STORE_ADDRESS_ERROR);
+    } else {
+        inter->store32(address, get_reg(rt));
+    }
 }
 
 void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
@@ -440,7 +481,12 @@ void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
         return;
     }
 
-    inter->store16(get_reg(rs) + imm16_se, (uint16_t) get_reg(rt));
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 2 != 0) {
+        exception(EXCEPTION_STORE_ADDRESS_ERROR);
+    } else {
+        inter->store16(address, (uint16_t) get_reg(rt));
+    }
 }
 
 void CPU::SB(size_t rs, size_t rt, int32_t imm16_se)
@@ -477,6 +523,7 @@ void CPU::SRA(size_t rt, size_t rd, uint8_t imm5)
 
 void CPU::JR(size_t rs)
 {
+    isBranch = true;
     nextPC = get_reg(rs);
 }
 
@@ -497,9 +544,19 @@ void CPU::MFHI(size_t rd)
     set_reg(rd, HI);
 }
 
+void CPU::MTHI(size_t rs)
+{
+    HI = get_reg(rs);
+}
+
 void CPU::MFLO(size_t rd)
 {
     set_reg(rd, LO);
+}
+
+void CPU::MTLO(size_t rs)
+{
+    LO = get_reg(rs);
 }
 
 void CPU::DIV(size_t rs, size_t rt)
@@ -553,7 +610,7 @@ void CPU::ADD(size_t rs, size_t rt, size_t rd)
 
     if ((s > 0 && t > 0 && result < 0) ||
         (s < 0 && t < 0 && result > 0)) {
-        error("Unhandled ADD overflow\n");
+        exception(EXCEPTION_OVERFLOW);
     }
 
     set_reg(rd, (uint32_t) result);
@@ -640,4 +697,12 @@ void CPU::MTC0(size_t rt, size_t rd)
         error("Unhandled write COP0 register: %zu\n", rd);
         exit(1);
     }
+}
+
+void CPU::RFE()
+{
+    // Restore the pre-exception mode
+    uint32_t mode = SR & 0x3F;  // Store last 6 bits
+    SR &= ~0x3F;                // Clear last 6 bits
+    SR |= (mode >> 2);          // Shift the stack to the right
 }

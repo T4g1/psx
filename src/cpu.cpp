@@ -261,6 +261,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x11: MTHI(get_rs(data)); break;
     case 0x12: MFLO(get_rd(data)); break;
     case 0x13: MTLO(get_rs(data)); break;
+    case 0x19: MULTU(get_rs(data), get_rt(data)); break;
     case 0x1A: DIV(get_rs(data), get_rt(data)); break;
     case 0x1B: DIVU(get_rs(data), get_rt(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
@@ -593,6 +594,17 @@ void CPU::MFLO(size_t rd)
 void CPU::MTLO(size_t rs)
 {
     LO = get_reg(rs);
+}
+
+void CPU::MULTU(size_t rs, size_t rt)
+{
+    uint64_t a = (uint64_t) get_reg(rs);
+    uint64_t b = (uint64_t) get_reg(rt);
+
+    uint64_t v = a * b;
+
+    HI = (uint32_t) (v >> 32);
+    LO = (uint32_t) v;
 }
 
 void CPU::DIV(size_t rs, size_t rt)

@@ -120,6 +120,7 @@ public:
     void MTHI(size_t rs);
     void MFLO(size_t rd);
     void MTLO(size_t rs);
+    void MULTU(size_t rs, size_t rt);
     void DIV(size_t rs, size_t rt);
     void DIVU(size_t rs, size_t rt);
     void ADD(size_t rs, size_t rt, size_t rd);

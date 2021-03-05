@@ -35,6 +35,9 @@
 #define TIMERS_START            0x1F801100
 #define TIMERS_SIZE             16 * 3 // 3 timers
 
+#define GPU_START               0x1F801810
+#define GPU_SIZE                2 * 4
+
 #define EXPANSION_2_START       0x1F802000
 #define EXPANSION_2_SIZE        66
 
@@ -123,6 +126,12 @@ void Interconnect::store16(uint32_t address, uint16_t value)
         error("Unhandled store16 to TIMERS register: 0x%08x: 0x%04x\n", offset, value);
     }
 
+    // IRQ_CONTROL register
+    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
+        uint32_t offset = address - IRQ_CONTROL_START;
+        error("Unhandled store16 to IRQ_CONTROL register: 0x%08x: 0x%04x\n", offset, value);
+    }
+
     else {
         error("Unhandled store16 at 0x%08x\n", address);
         exit(1);
@@ -145,6 +154,12 @@ void Interconnect::store32(uint32_t address, uint32_t value)
     // Is it mapped to RAM ?
     if (in_range(address, RAM_START, RAM_SIZE)) {
         ram->store32(address - RAM_START, value);
+    }
+
+    // Is it mapped to GPU ?
+    else if (in_range(address, GPU_START, GPU_SIZE)) {
+        uint32_t offset = address - GPU_START;
+        error("Unhandled store32 to GPU register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     // Is it mapped to BIOS ?
@@ -249,8 +264,15 @@ uint16_t Interconnect::load16(uint32_t address)
         return 0;
     }
 
+    // IRQ_CONTROL register
+    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
+        uint32_t offset = address - IRQ_CONTROL_START;
+        error("Unhandled load16 to IRQ_CONTROL register: 0x%08x\n", offset);
+        return 0;
+    }
+
     else {
-        error("Unhandled load8 at 0x%08x\n", address);
+        error("Unhandled load16 at 0x%08x\n", address);
         exit(1);
     }
 }
@@ -269,6 +291,13 @@ uint32_t Interconnect::load32(uint32_t address)
     // Is it mapped to RAM ?
     if (in_range(address, RAM_START, RAM_SIZE)) {
         return ram->load32(address - RAM_START);
+    }
+
+    // Is it mapped to GPU ?
+    else if (in_range(address, GPU_START, GPU_SIZE)) {
+        uint32_t offset = address - GPU_START;
+        error("Unhandled load32 to GPU register: 0x%08x\n", offset);
+        return 0;
     }
 
     // Is it mapped to BIOS ?

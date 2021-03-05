@@ -4,6 +4,7 @@
 #include "log.h"
 #include "interconnect.h"
 #include "instruction.h"
+#include "common.h"
 
 #include "cpu.h"
 
@@ -112,8 +113,10 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x12: COP2(data); break;
     case 0x13: COP3(data); break;
     case 0x20: LB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x21: LH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x23: LW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x24: LBU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x25: LHU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x28: SB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x29: SH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
@@ -134,9 +137,9 @@ void CPU::exception(uint32_t cause)
     // Last 6 bit of SR is three pairs of Interupt Enable/User mode bits
     // They behave like a stack of 3 entries. They are pushed with two zero
     // at each exception.
-    uint32_t mode = SR & 0x3F;  // Store last 6 bits of SR
-    SR &= ~0x3F;                // Clear 6 last bits
-    SR |= (mode << 2) & 0x3F;   // Shift mode and store back in SR
+    uint32_t mode = SR & MASK_6_BITS;  // Store last 6 bits of SR
+    SR &= ~MASK_6_BITS;                // Clear 6 last bits
+    SR |= (mode << 2) & MASK_6_BITS;   // Shift mode and store back in SR
 
     // CAUSE register updated with exception code (bits [6:2])
     CAUSE = cause << 2;
@@ -248,6 +251,9 @@ void CPU::SPECIAL(uint32_t data)
     case 0x00: SLL(get_rt(data), get_rd(data), get_imm5(data)); break;
     case 0x02: SRL(get_rt(data), get_rd(data), get_imm5(data)); break;
     case 0x03: SRA(get_rt(data), get_rd(data), get_imm5(data)); break;
+    case 0x04: SLLV(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x06: SRLV(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x07: SRAV(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x08: JR(get_rs(data)); break;
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
     case 0x0C: SYSCALL(); break;
@@ -262,6 +268,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x23: SUBU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x24: AND(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x27: NOR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2A: SLT(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
     default:
@@ -365,6 +372,16 @@ void CPU::ANDI(size_t rs, size_t rt, uint32_t imm16)
     set_reg(rt, get_reg(rs) & imm16);
 }
 
+void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
+{
+    set_reg(rt, get_reg(rs) | imm16);
+}
+
+void CPU::LUI(size_t rt, uint16_t imm16)
+{
+    set_reg(rt, imm16 << 16);
+}
+
 void CPU::COP0(uint32_t data)
 {
     uint8_t opcode = get_cop_opcode(data);              // Bits 25 - 21
@@ -407,11 +424,6 @@ void CPU::COP3(uint32_t data)
 
 void CPU::LB(size_t rs, size_t rt, int32_t imm16_se)
 {
-    if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring load while cache is isolated\n");
-        return;
-    }
-
     // Cast for sign extension
     int8_t value = (int8_t)inter->load8(get_reg(rs) + imm16_se);
 
@@ -420,13 +432,22 @@ void CPU::LB(size_t rs, size_t rt, int32_t imm16_se)
     load_value = (uint32_t) value;
 }
 
+void CPU::LH(size_t rs, size_t rt, int32_t imm16_se)
+{
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 2 != 0) {
+        exception(EXCEPTION_LOAD_ADDRESS_ERROR);
+    } else {
+        int16_t value = (int16_t) inter->load16(address);
+
+        // Create a pending load
+        load_reg = rt;
+        load_value = (uint32_t) value;
+    }
+}
+
 void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
 {
-    if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring load while cache is isolated\n");
-        return;
-    }
-
     uint32_t address = get_reg(rs) + imm16_se;
     if (address % 4 != 0) {
         exception(EXCEPTION_LOAD_ADDRESS_ERROR);
@@ -439,39 +460,31 @@ void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
 
 void CPU::LBU(size_t rs, size_t rt, int32_t imm16_se)
 {
-    if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring load while cache is isolated\n");
-        return;
-    }
-
     // Create a pending load
     load_reg = rt;
     load_value = (uint32_t) inter->load8(get_reg(rs) + imm16_se);
 }
 
-void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
+void CPU::LHU(size_t rs, size_t rt, int32_t imm16_se)
 {
-    set_reg(rt, get_reg(rs) | imm16);
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 2 != 0) {
+        exception(EXCEPTION_LOAD_ADDRESS_ERROR);
+    } else {
+        // Create a pending load
+        load_reg = rt;
+        load_value = (uint32_t) inter->load16(address);
+    }
 }
 
-void CPU::LUI(size_t rt, uint16_t imm16)
-{
-    set_reg(rt, imm16 << 16);
-}
-
-void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
+void CPU::SB(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring store32 while cache is isolated\n");
+        //debug("Ignoring store8 while cache is isolated\n");
         return;
     }
 
-    uint32_t address = get_reg(rs) + imm16_se;
-    if (address % 4 != 0) {
-        exception(EXCEPTION_STORE_ADDRESS_ERROR);
-    } else {
-        inter->store32(address, get_reg(rt));
-    }
+    inter->store8(get_reg(rs) + imm16_se, (uint8_t) get_reg(rt));
 }
 
 void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
@@ -489,14 +502,19 @@ void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
     }
 }
 
-void CPU::SB(size_t rs, size_t rt, int32_t imm16_se)
+void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
-        //debug("Ignoring store8 while cache is isolated\n");
+        //debug("Ignoring store32 while cache is isolated\n");
         return;
     }
 
-    inter->store8(get_reg(rs) + imm16_se, (uint8_t) get_reg(rt));
+    uint32_t address = get_reg(rs) + imm16_se;
+    if (address % 4 != 0) {
+        exception(EXCEPTION_STORE_ADDRESS_ERROR);
+    } else {
+        inter->store32(address, get_reg(rt));
+    }
 }
 
 
@@ -519,6 +537,24 @@ void CPU::SRL(size_t rt, size_t rd, uint8_t imm5)
 void CPU::SRA(size_t rt, size_t rd, uint8_t imm5)
 {
     set_reg(rd, get_reg_se(rt) >> imm5);
+}
+
+void CPU::SLLV(size_t rs, size_t rt, size_t rd)
+{
+    // Truncate shift amount to 5 bits
+    set_reg(rd, get_reg_se(rt) << (get_reg(rs) & MASK_5_BITS));
+}
+
+void CPU::SRLV(size_t rs, size_t rt, size_t rd)
+{
+    // Truncate shift amount to 5 bits
+    set_reg(rd, get_reg(rt) >> (get_reg(rs) & MASK_5_BITS));
+}
+
+void CPU::SRAV(size_t rs, size_t rt, size_t rd)
+{
+    // Truncate shift amount to 5 bits
+    set_reg(rd, get_reg_se(rt) >> (get_reg(rs) & MASK_5_BITS));
 }
 
 void CPU::JR(size_t rs)
@@ -636,6 +672,11 @@ void CPU::OR(size_t rs, size_t rt, size_t rd)
     set_reg(rd, get_reg(rs) | get_reg(rt));
 }
 
+void CPU::NOR(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, !(get_reg(rs) | get_reg(rt)));
+}
+
 void CPU::SLT(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg_se(rs) < get_reg_se(rt));
@@ -702,7 +743,7 @@ void CPU::MTC0(size_t rt, size_t rd)
 void CPU::RFE()
 {
     // Restore the pre-exception mode
-    uint32_t mode = SR & 0x3F;  // Store last 6 bits
-    SR &= ~0x3F;                // Clear last 6 bits
-    SR |= (mode >> 2);          // Shift the stack to the right
+    uint32_t mode = SR & MASK_6_BITS;  // Store last 6 bits
+    SR &= ~MASK_6_BITS;                // Clear last 6 bits
+    SR |= (mode >> 2);                 // Shift the stack to the right
 }

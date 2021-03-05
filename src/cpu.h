@@ -98,8 +98,10 @@ public:
     void COP2(uint32_t data);
     void COP3(uint32_t data);
     void LB(size_t rs, size_t rt, int32_t imm16_se);
+    void LH(size_t rs, size_t rt, int32_t imm16_se);
     void LW(size_t rs, size_t rt, int32_t imm16_se);
     void LBU(size_t rs, size_t rt, int32_t imm16_se);
+    void LHU(size_t rs, size_t rt, int32_t imm16_se);
     void SB(size_t rs, size_t rt, int32_t imm16_se);
     void SH(size_t rs, size_t rt, int32_t imm16_se);
     void SW(size_t rs, size_t rt, int32_t imm16_se);
@@ -108,6 +110,9 @@ public:
     void SLL(size_t rt, size_t rd, uint8_t imm5);
     void SRL(size_t rt, size_t rd, uint8_t imm5);
     void SRA(size_t rt, size_t rd, uint8_t imm5);
+    void SLLV(size_t rs, size_t rt, size_t rd);
+    void SRLV(size_t rs, size_t rt, size_t rd);
+    void SRAV(size_t rs, size_t rt, size_t rd);
     void JR(size_t rs);
     void JALR(size_t rs, size_t rd);
     void SYSCALL();
@@ -122,6 +127,7 @@ public:
     void SUBU(size_t rs, size_t rt, size_t rd);
     void AND(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
+    void NOR(size_t rs, size_t rt, size_t rd);
     void SLT(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);
 

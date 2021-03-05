@@ -29,6 +29,9 @@
 #define IRQ_CONTROL_START       0x1F801070
 #define IRQ_CONTROL_SIZE        8
 
+#define DMA_START               0x1F801080
+#define DMA_SIZE                128
+
 #define TIMERS_START            0x1F801100
 #define TIMERS_SIZE             16 * 3 // 3 timers
 
@@ -102,11 +105,15 @@ void Interconnect::store16(uint32_t address, uint16_t value)
         exit(1);
     }
 
-    // Is it mapped to SPU ?
-    if (in_range(address, SPU_START, SPU_SIZE)) {
-        uint32_t offset = address - SPU_START;
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        ram->store16(address - RAM_START, value);
+    }
 
-        error("Unhandled store16 to SPU register: 0x%08x: 0x%04x\n", offset, value);
+    // Is it mapped to SPU ?
+    else if (in_range(address, SPU_START, SPU_SIZE)) {
+        //uint32_t offset = address - SPU_START;
+        //error("Unhandled store16 to SPU register: 0x%08x: 0x%04x\n", offset, value);
     }
 
     // Is it mapped to TIMERS ?
@@ -143,6 +150,12 @@ void Interconnect::store32(uint32_t address, uint32_t value)
     // Is it mapped to BIOS ?
     else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         bios->store32(address - BIOS_START, value);
+    }
+
+    // Is it mapped to DMA ?
+    else if (in_range(address, DMA_START, DMA_SIZE)) {
+        uint32_t offset = address - DMA_START;
+        error("Unhandled store32 to DMA register: 0x%08x: 0x%08x\n", offset, value);
     }
 
     // Is it mapped to EXPANSION 1 or 2 ?
@@ -220,6 +233,29 @@ uint8_t Interconnect::load8(uint32_t address)
 }
 
 
+uint16_t Interconnect::load16(uint32_t address)
+{
+    address = mask_region(address);
+
+    // Is it mapped to RAM ?
+    if (in_range(address, RAM_START, RAM_SIZE)) {
+        return ram->load16(address - RAM_START);
+    }
+
+    // Is it mapped to SPU ?
+    else if (in_range(address, SPU_START, SPU_SIZE)) {
+        //uint32_t offset = address - SPU_START;
+        //error("Unhandled load16 to SPU register: 0x%08x\n", offset);
+        return 0;
+    }
+
+    else {
+        error("Unhandled load8 at 0x%08x\n", address);
+        exit(1);
+    }
+}
+
+
 uint32_t Interconnect::load32(uint32_t address)
 {
     address = mask_region(address);
@@ -238,6 +274,13 @@ uint32_t Interconnect::load32(uint32_t address)
     // Is it mapped to BIOS ?
     else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         return bios->load32(address - BIOS_START);
+    }
+
+    // Is it mapped to DMA ?
+    else if (in_range(address, DMA_START, DMA_SIZE)) {
+        uint32_t offset = address - DMA_START;
+        error("Unhandled load32 to DMA register: 0x%08x\n", offset);
+        return 0;
     }
 
     // IRQ_CONTROL register

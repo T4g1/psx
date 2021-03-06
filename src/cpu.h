@@ -16,6 +16,7 @@
 #define EXCEPTION_STORE_ADDRESS_ERROR       0x5
 #define EXCEPTION_SYSCALL                   0x8
 #define EXCEPTION_BREAK                     0x9
+#define EXCEPTION_COPROCESSOR_ERROR         0xB
 #define EXCEPTION_OVERFLOW                  0xC
 
 class Interconnect;
@@ -93,6 +94,7 @@ public:
     void SLTIU(size_t rs, size_t rt, int32_t imm16_se);
     void ANDI(size_t rs, size_t rt, uint32_t imm16);
     void ORI(size_t rs, size_t rt, uint16_t imm16);
+    void XORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
     void COP0(uint32_t data);
     void COP1(uint32_t data);

@@ -107,6 +107,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x0B: SLTIU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x0C: ANDI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0D: ORI(get_rs(data), get_rt(data), get_imm16(data)); break;
+    case 0x0E: XORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x10: COP0(data); break;
     case 0x11: COP1(data); break;
@@ -382,6 +383,11 @@ void CPU::ORI(size_t rs, size_t rt, uint16_t imm16)
     set_reg(rt, get_reg(rs) | imm16);
 }
 
+void CPU::XORI(size_t rs, size_t rt, uint16_t imm16)
+{
+    set_reg(rt, get_reg(rs) ^ imm16);
+}
+
 void CPU::LUI(size_t rt, uint16_t imm16)
 {
     set_reg(rt, imm16 << 16);
@@ -411,20 +417,18 @@ void CPU::COP0(uint32_t data)
 
 void CPU::COP1(uint32_t data)
 {
-    error("Unhandled COP1: 0x%08x", data);
-    exit(1);
+    exception(EXCEPTION_COPROCESSOR_ERROR);
 }
 
 void CPU::COP2(uint32_t data)
 {
-    error("Unhandled COP2: 0x%08x", data);
+    error("Unhandled COP2 GTE: 0x%08x", data);
     exit(1);
 }
 
 void CPU::COP3(uint32_t data)
 {
-    error("Unhandled COP3: 0x%08x", data);
-    exit(1);
+    exception(EXCEPTION_COPROCESSOR_ERROR);
 }
 
 void CPU::LB(size_t rs, size_t rt, int32_t imm16_se)

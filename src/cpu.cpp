@@ -110,17 +110,21 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x0E: XORI(get_rs(data), get_rt(data), get_imm16(data)); break;
     case 0x0F: LUI(get_rt(data), get_imm16(data)); break;
     case 0x10: COP0(data); break;
-    case 0x11: COP1(data); break;
+    case 0x11: COP1(); break;
     case 0x12: COP2(data); break;
-    case 0x13: COP3(data); break;
+    case 0x13: COP3(); break;
     case 0x20: LB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x21: LH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x22: LWL(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x23: LW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x24: LBU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x25: LHU(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x26: LWR(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x28: SB(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x29: SH(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x2A: SWL(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
+    case 0x2E: SWR(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     default:
         error("Unhandled OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
         exit(1);
@@ -415,7 +419,7 @@ void CPU::COP0(uint32_t data)
     }
 }
 
-void CPU::COP1(uint32_t data)
+void CPU::COP1()
 {
     exception(EXCEPTION_COPROCESSOR_ERROR);
 }
@@ -426,7 +430,7 @@ void CPU::COP2(uint32_t data)
     exit(1);
 }
 
-void CPU::COP3(uint32_t data)
+void CPU::COP3()
 {
     exception(EXCEPTION_COPROCESSOR_ERROR);
 }
@@ -453,6 +457,32 @@ void CPU::LH(size_t rs, size_t rt, int32_t imm16_se)
         load_reg = rt;
         load_value = (uint32_t) value;
     }
+}
+
+void CPU::LWL(size_t rs, size_t rt, int32_t imm16_se)
+{
+    uint32_t address = get_reg(rs) + imm16_se;
+
+    // Bypass load delay
+    uint32_t value = out_reg[rt];
+
+    // Load the word containing the left part the unaligned addressed word
+    uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
+    uint32_t aligned_value = inter->load32(aligned_address);
+
+    // Depending on the address alignement, store the relevant left part in the
+    // loaded value
+    switch(address & 0x03) {
+    case 0: value = (value & 0x00FFFFFF) | (aligned_value << 24); break;
+    case 1: value = (value & 0x0000FFFF) | (aligned_value << 16); break;
+    case 2: value = (value & 0x000000FF) | (aligned_value << 8); break;
+    case 3: value = (value & 0x00000000) | (aligned_value << 0); break;
+    default: exit(1); break; // Unreachable
+    }
+
+    // Pending load
+    load_reg = rt;
+    load_value = value;
 }
 
 void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
@@ -486,6 +516,32 @@ void CPU::LHU(size_t rs, size_t rt, int32_t imm16_se)
     }
 }
 
+void CPU::LWR(size_t rs, size_t rt, int32_t imm16_se)
+{
+    uint32_t address = get_reg(rs) + imm16_se;
+
+    // Bypass load delay
+    uint32_t value = out_reg[rt];
+
+    // Load the word containing the left part the unaligned addressed word
+    uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
+    uint32_t aligned_value = inter->load32(aligned_address);
+
+    // Depending on the address alignement, store the relevant right part in the
+    // loaded value
+    switch(address & 0x03) {
+    case 0: value = (value & 0x00000000) | (aligned_value >> 0); break;
+    case 1: value = (value & 0xFF000000) | (aligned_value >> 8); break;
+    case 2: value = (value & 0xFFFF0000) | (aligned_value >> 16); break;
+    case 3: value = (value & 0xFFFFFF00) | (aligned_value >> 24); break;
+    default: exit(1); break; // Unreachable
+    }
+
+    // Pending load
+    load_reg = rt;
+    load_value = value;
+}
+
 void CPU::SB(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
@@ -511,6 +567,24 @@ void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
     }
 }
 
+void CPU::SWL(size_t rs, size_t rt, int32_t imm16_se)
+{
+    uint32_t address = get_reg(rs) + imm16_se;
+    uint32_t value = get_reg(rt);
+
+    uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
+    uint32_t memory = inter->load32(aligned_address);
+    switch(address & 0x03) {
+    case 0: memory = (memory & 0xFFFFFF00) | (value >> 24); break;
+    case 1: memory = (memory & 0xFFFF0000) | (value >> 16); break;
+    case 2: memory = (memory & 0xFF000000) | (value >> 8); break;
+    case 3: memory = (memory & 0x00000000) | (value >> 0); break;
+    default: exit(1); break; // Unreachable
+    }
+
+    inter->store32(address, memory);
+}
+
 void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
 {
     if (SR & SR_CACHE_ISOLATION) {
@@ -524,6 +598,24 @@ void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
     } else {
         inter->store32(address, get_reg(rt));
     }
+}
+
+void CPU::SWR(size_t rs, size_t rt, int32_t imm16_se)
+{
+    uint32_t address = get_reg(rs) + imm16_se;
+    uint32_t value = get_reg(rt);
+
+    uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
+    uint32_t memory = inter->load32(aligned_address);
+    switch(address & 0x03) {
+    case 0: memory = (memory & 0x00000000) | (value << 0); break;
+    case 1: memory = (memory & 0x000000FF) | (value << 8); break;
+    case 2: memory = (memory & 0x0000FFFF) | (value << 16); break;
+    case 3: memory = (memory & 0x00FFFFFF) | (value << 24); break;
+    default: exit(1); break; // Unreachable
+    }
+
+    inter->store32(address, memory);
 }
 
 

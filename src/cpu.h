@@ -97,17 +97,21 @@ public:
     void XORI(size_t rs, size_t rt, uint16_t imm16);
     void LUI(size_t rt, uint16_t imm16);
     void COP0(uint32_t data);
-    void COP1(uint32_t data);
+    void COP1();
     void COP2(uint32_t data);
-    void COP3(uint32_t data);
+    void COP3();
     void LB(size_t rs, size_t rt, int32_t imm16_se);
     void LH(size_t rs, size_t rt, int32_t imm16_se);
+    void LWL(size_t rs, size_t rt, int32_t imm16_se);
     void LW(size_t rs, size_t rt, int32_t imm16_se);
     void LBU(size_t rs, size_t rt, int32_t imm16_se);
     void LHU(size_t rs, size_t rt, int32_t imm16_se);
+    void LWR(size_t rs, size_t rt, int32_t imm16_se);
     void SB(size_t rs, size_t rt, int32_t imm16_se);
     void SH(size_t rs, size_t rt, int32_t imm16_se);
+    void SWL(size_t rs, size_t rt, int32_t imm16_se);
     void SW(size_t rs, size_t rt, int32_t imm16_se);
+    void SWR(size_t rs, size_t rt, int32_t imm16_se);
 
     // SPECIAL Opcodes
     void SLL(size_t rt, size_t rd, uint8_t imm5);

@@ -199,6 +199,34 @@ bool test_SLT()
     return true;
 }
 
+bool test_SUB()
+{
+    cpu->reset();
+    cpu->force_set_reg(2, 0xFFFFFFFF);
+    cpu->force_set_reg(3, 0x00000002);
+
+    cpu->SUB(2, 3, 1);
+
+    ASSERT((int32_t) cpu->force_get_reg(1) == -3);
+
+    cpu->force_set_reg(2, 0x80000000);
+    cpu->force_set_reg(3, 0xFFFFFFFF);
+
+    cpu->SUB(2, 3, 1);
+
+    ASSERT((int32_t) cpu->force_get_reg(1) == -2147483647);
+
+    // Trigger an overflow
+    cpu->force_set_reg(2, 0x80000000);
+    cpu->force_set_reg(3, 0x00000001);
+
+    cpu->SUB(2, 3, 1);
+
+    ASSERT(cpu->get_PC() == 0x80000080);
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     info("PSX testing\n");
@@ -227,6 +255,7 @@ int main(int argc, char *argv[])
     test("CPU: Store/Load", &test_store_load);
     test("CPU: DIV", &test_DIV);
     test("CPU: SLT", &test_SLT);
+    test("CPU: SUB", &test_SUB);
 
     return EXIT_SUCCESS;
 }

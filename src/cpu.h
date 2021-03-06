@@ -15,6 +15,7 @@
 #define EXCEPTION_LOAD_ADDRESS_ERROR        0x4
 #define EXCEPTION_STORE_ADDRESS_ERROR       0x5
 #define EXCEPTION_SYSCALL                   0x8
+#define EXCEPTION_BREAK                     0x9
 #define EXCEPTION_OVERFLOW                  0xC
 
 class Interconnect;
@@ -116,18 +117,22 @@ public:
     void JR(size_t rs);
     void JALR(size_t rs, size_t rd);
     void SYSCALL();
+    void BREAK();
     void MFHI(size_t rd);
     void MTHI(size_t rs);
     void MFLO(size_t rd);
     void MTLO(size_t rs);
+    void MULT(size_t rs, size_t rt);
     void MULTU(size_t rs, size_t rt);
     void DIV(size_t rs, size_t rt);
     void DIVU(size_t rs, size_t rt);
     void ADD(size_t rs, size_t rt, size_t rd);
     void ADDU(size_t rs, size_t rt, size_t rd);
+    void SUB(size_t rs, size_t rt, size_t rd);
     void SUBU(size_t rs, size_t rt, size_t rd);
     void AND(size_t rs, size_t rt, size_t rd);
     void OR(size_t rs, size_t rt, size_t rd);
+    void XOR(size_t rs, size_t rt, size_t rd);
     void NOR(size_t rs, size_t rt, size_t rd);
     void SLT(size_t rs, size_t rt, size_t rd);
     void SLTU(size_t rs, size_t rt, size_t rd);

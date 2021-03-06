@@ -257,18 +257,22 @@ void CPU::SPECIAL(uint32_t data)
     case 0x08: JR(get_rs(data)); break;
     case 0x09: JALR(get_rs(data), get_rd(data)); break;
     case 0x0C: SYSCALL(); break;
+    case 0x0D: BREAK(); break;
     case 0x10: MFHI(get_rd(data)); break;
     case 0x11: MTHI(get_rs(data)); break;
     case 0x12: MFLO(get_rd(data)); break;
     case 0x13: MTLO(get_rs(data)); break;
+    case 0x18: MULT(get_rs(data), get_rt(data)); break;
     case 0x19: MULTU(get_rs(data), get_rt(data)); break;
     case 0x1A: DIV(get_rs(data), get_rt(data)); break;
     case 0x1B: DIVU(get_rs(data), get_rt(data)); break;
     case 0x20: ADD(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x21: ADDU(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x22: SUB(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x23: SUBU(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x24: AND(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x25: OR(get_rs(data), get_rt(data), get_rd(data)); break;
+    case 0x26: XOR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x27: NOR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2A: SLT(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
@@ -576,6 +580,11 @@ void CPU::SYSCALL()
     exception(EXCEPTION_SYSCALL);
 }
 
+void CPU::BREAK()
+{
+    exception(EXCEPTION_BREAK);
+}
+
 void CPU::MFHI(size_t rd)
 {
     set_reg(rd, HI);
@@ -594,6 +603,17 @@ void CPU::MFLO(size_t rd)
 void CPU::MTLO(size_t rs)
 {
     LO = get_reg(rs);
+}
+
+void CPU::MULT(size_t rs, size_t rt)
+{
+    int64_t a = (int64_t) get_reg_se(rs);
+    int64_t b = (int64_t) get_reg_se(rt);
+
+    uint64_t v = (uint64_t) (a * b);
+
+    HI = (uint32_t) (v >> 32);
+    LO = (uint32_t) v;
 }
 
 void CPU::MULTU(size_t rs, size_t rt)
@@ -669,6 +689,21 @@ void CPU::ADDU(size_t rs, size_t rt, size_t rd)
     set_reg(rd, get_reg(rs) + get_reg(rt));
 }
 
+void CPU::SUB(size_t rs, size_t rt, size_t rd)
+{
+    int64_t s = (int64_t) get_reg_se(rs);
+    int64_t t = (int64_t) get_reg_se(rt);
+
+    if ((s < 0 && t > (s - (int64_t)INT32_MIN)) ||
+        (s > 0 && t < -((int64_t)INT32_MAX - s))) {
+        exception(EXCEPTION_OVERFLOW);
+    }
+
+    int64_t result = s - t;
+
+    set_reg(rd, (uint32_t) result);
+}
+
 void CPU::SUBU(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg(rs) - get_reg(rt));
@@ -682,6 +717,11 @@ void CPU::AND(size_t rs, size_t rt, size_t rd)
 void CPU::OR(size_t rs, size_t rt, size_t rd)
 {
     set_reg(rd, get_reg(rs) | get_reg(rt));
+}
+
+void CPU::XOR(size_t rs, size_t rt, size_t rd)
+{
+    set_reg(rd, get_reg(rs) ^ get_reg(rt));
 }
 
 void CPU::NOR(size_t rs, size_t rt, size_t rd)

@@ -173,6 +173,13 @@ void Interconnect::store32(uint32_t address, uint32_t value)
         error("Unhandled store32 to DMA register: 0x%08x: 0x%08x\n", offset, value);
     }
 
+    // Is it mapped to TIMERS ?
+    else if (in_range(address, TIMERS_START, TIMERS_SIZE)) {
+        uint32_t offset = address - TIMERS_START;
+
+        error("Unhandled store32 to TIMERS register: 0x%08x: 0x%04x\n", offset, value);
+    }
+
     // Is it mapped to EXPANSION 1 or 2 ?
     else if (in_range(address, SYS_CONTROL_START, SYS_CONTROL_SIZE)) {
         uint32_t offset = address - SYS_CONTROL_START;
@@ -296,8 +303,14 @@ uint32_t Interconnect::load32(uint32_t address)
     // Is it mapped to GPU ?
     else if (in_range(address, GPU_START, GPU_SIZE)) {
         uint32_t offset = address - GPU_START;
-        error("Unhandled load32 to GPU register: 0x%08x\n", offset);
-        return 0;
+
+        switch(offset) {
+        // Let the CPU knows GPU is ready
+        case 4: return 0x10000000;
+        default:
+            error("Unhandled load32 to GPU register: 0x%08x\n", offset);
+            return 0;
+        }
     }
 
     // Is it mapped to BIOS ?

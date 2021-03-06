@@ -16,6 +16,7 @@
 #define EXCEPTION_STORE_ADDRESS_ERROR       0x5
 #define EXCEPTION_SYSCALL                   0x8
 #define EXCEPTION_BREAK                     0x9
+#define EXCEPTION_ILLEGAL_INSTRUCTION       0xA
 #define EXCEPTION_COPROCESSOR_ERROR         0xB
 #define EXCEPTION_OVERFLOW                  0xC
 
@@ -112,6 +113,14 @@ public:
     void SWL(size_t rs, size_t rt, int32_t imm16_se);
     void SW(size_t rs, size_t rt, int32_t imm16_se);
     void SWR(size_t rs, size_t rt, int32_t imm16_se);
+    void LWC0();
+    void LWC1();
+    void LWC2(uint32_t data);
+    void LWC3();
+    void SWC0();
+    void SWC1();
+    void SWC2(uint32_t data);
+    void SWC3();
 
     // SPECIAL Opcodes
     void SLL(size_t rt, size_t rd, uint8_t imm5);

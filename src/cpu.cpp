@@ -125,9 +125,15 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x2A: SWL(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x2B: SW(get_rs(data), get_rt(data), get_imm16_se(data)); break;
     case 0x2E: SWR(get_rs(data), get_rt(data), get_imm16_se(data)); break;
-    default:
-        error("Unhandled OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
-        exit(1);
+    case 0x30: LWC0(); break;
+    case 0x31: LWC1(); break;
+    case 0x32: LWC2(data); break;
+    case 0x33: LWC3(); break;
+    case 0x38: SWC0(); break;
+    case 0x39: SWC1(); break;
+    case 0x3A: SWC2(data); break;
+    case 0x3B: SWC3(); break;
+    default: exception(EXCEPTION_ILLEGAL_INSTRUCTION); break;
     }
 }
 
@@ -281,9 +287,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x27: NOR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2A: SLT(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
-    default:
-        error("Unhandled SECONDARY OPCODE: 0x%02x (inst: 0x%08x)\n", opcode, data);
-        exit(1);
+    default: exception(EXCEPTION_ILLEGAL_INSTRUCTION); break;
     }
 }
 
@@ -616,6 +620,48 @@ void CPU::SWR(size_t rs, size_t rt, int32_t imm16_se)
     }
 
     inter->store32(address, memory);
+}
+
+void CPU::LWC0()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
+}
+
+void CPU::LWC1()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
+}
+
+void CPU::LWC2(uint32_t data)
+{
+    error("Unhandled GTE LWC 0x%08x\n", data);
+    exit(1);
+}
+
+void CPU::LWC3()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
+}
+
+void CPU::SWC0()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
+}
+
+void CPU::SWC1()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
+}
+
+void CPU::SWC2(uint32_t data)
+{
+    error("Unhandled GTE SWC 0x%08x\n", data);
+    exit(1);
+}
+
+void CPU::SWC3()
+{
+    exception(EXCEPTION_COPROCESSOR_ERROR);
 }
 
 

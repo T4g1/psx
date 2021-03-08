@@ -133,7 +133,7 @@ void CPU::decode_and_execute(uint32_t data)
     case 0x39: SWC1(); break;
     case 0x3A: SWC2(data); break;
     case 0x3B: SWC3(); break;
-    default: exception(EXCEPTION_ILLEGAL_INSTRUCTION); break;
+    default: exception(EXCEPTION_ILLEGAL_INSTRUCTIONS); break;
     }
 }
 
@@ -287,7 +287,7 @@ void CPU::SPECIAL(uint32_t data)
     case 0x27: NOR(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2A: SLT(get_rs(data), get_rt(data), get_rd(data)); break;
     case 0x2B: SLTU(get_rs(data), get_rt(data), get_rd(data)); break;
-    default: exception(EXCEPTION_ILLEGAL_INSTRUCTION); break;
+    default: exception(EXCEPTION_ILLEGAL_INSTRUCTIONS); break;
     }
 }
 

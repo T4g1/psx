@@ -16,7 +16,7 @@
 #define EXCEPTION_STORE_ADDRESS_ERROR       0x5
 #define EXCEPTION_SYSCALL                   0x8
 #define EXCEPTION_BREAK                     0x9
-#define EXCEPTION_ILLEGAL_INSTRUCTION       0xA
+#define EXCEPTION_ILLEGAL_INSTRUCTIONS      0xA
 #define EXCEPTION_COPROCESSOR_ERROR         0xB
 #define EXCEPTION_OVERFLOW                  0xC
 

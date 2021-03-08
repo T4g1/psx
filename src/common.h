@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include  <cstdint>
+#include <cstdint>
 
 #define MASK_5_BITS         0x1F
 #define MASK_6_BITS         0x3F

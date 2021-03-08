@@ -1,7 +1,9 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
 
-#include  <cstdint>
+#include <cstdint>
+
+#define INSTRUCTION_MAX_SIZE            200
 
 
 uint8_t get_primary_opcode(uint32_t instruction);
@@ -16,6 +18,6 @@ int32_t get_imm16_se(uint32_t instruction);
 uint32_t get_imm26(uint32_t instruction);
 uint32_t get_comment(uint32_t instruction);
 
-void decode(uint32_t data);
+void decode(char* buffer, size_t size, uint32_t data);
 
 #endif /* INSTRUCTION_H */

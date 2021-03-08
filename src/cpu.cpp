@@ -1,3 +1,5 @@
+#include "cpu.h"
+
 #include <stdlib.h>
 #include <inttypes.h>
 
@@ -8,12 +10,13 @@
 #include "instruction.h"
 #include "common.h"
 
-#include "cpu.h"
 
 #define SR_CACHE_ISOLATION          0x010000
 
 #define BcondZ_BGEZ_MASK            0b00001
 #define BcondZ_LINK_MASK            0b10000
+
+#define EXEC_STACK_SIZE             50
 
 
 CPU::~CPU()
@@ -224,6 +227,40 @@ void CPU::display_registers(bool *status)
         ImGui::NextColumn();
 
         ImGui::Columns(1, "boolean", false);
+
+        ImGui::EndChild();
+    }
+
+    ImGui::End();
+}
+
+void CPU::display_execution(bool *status)
+{
+    const char *title = "Execution";
+    char buffer[INSTRUCTION_MAX_SIZE];
+
+    if (ImGui::Begin(title, status)) {
+        ImGui::BeginChild("execution");
+
+        for (int i=-EXEC_STACK_SIZE; i<EXEC_STACK_SIZE; i++) {
+            if (i == 0) {
+                ImGui::Separator();
+            }
+
+            uint32_t address = PC + (i * INSTRUCTION_LENGTH);
+            if (inter->canLoad32(address)) {
+                uint32_t data = inter->load32(address);
+
+                decode(buffer, INSTRUCTION_MAX_SIZE, data);
+                ImGui::Text("0x%08X %s", data, buffer);
+            } else {
+                ImGui::Text("0x???????? ?");
+            }
+
+            if (i == 0) {
+                ImGui::Separator();
+            }
+        }
 
         ImGui::EndChild();
     }

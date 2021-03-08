@@ -10,6 +10,9 @@ class BIOS;
 class RAM;
 class Interconnect;
 
+class SDL_Window;
+class SDL_PixelFormat;
+
 
 /**
  * @brief      PSX Emulator
@@ -29,7 +32,7 @@ class PSX {
 
     SDL_Window *sdl_window;
     SDL_PixelFormat *pixel_format;
-    SDL_GLContext gl_context;
+    void* gl_context;
 
     // Which window to display
     bool show_cpu;
@@ -38,10 +41,9 @@ class PSX {
     bool show_breakpoints;
     bool show_gpu;
 
-    Uint32 last_refresh;
+    uint32_t last_refresh;
 
     void display_memory();
-    void display_execution();
     void display_breakpoints();
     void display_gpu();
 

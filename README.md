@@ -1,5 +1,7 @@
 # psx
 
+![CPU Interface](img/screen1.png)
+
 # Building
 
 The build process was done on a Debian based system (expecting SDL2 to be in `/usr/include/SDL2`)

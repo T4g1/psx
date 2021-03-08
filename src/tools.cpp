@@ -26,7 +26,8 @@ int main(int argc, char *argv[])
     const char *hexstring = argv[1];
     unsigned long number = strtoul(hexstring, NULL, 16);
 
-    decode((uint32_t) number);
+    char buffer[INSTRUCTION_MAX_SIZE];
+    decode(buffer, INSTRUCTION_MAX_SIZE, (uint32_t) number);
 
     return EXIT_SUCCESS;
 }

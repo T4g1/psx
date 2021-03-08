@@ -186,7 +186,7 @@ void PSX::draw()
 
     if (show_cpu) cpu->display_registers(&show_cpu);
     if (show_memory) display_memory();
-    if (show_execution) display_execution();
+    if (show_execution) cpu->display_execution(&show_execution);
     if (show_breakpoints) display_breakpoints();
     if (show_gpu) display_gpu();
 
@@ -284,12 +284,6 @@ void PSX::load_rom(std::string filepath)
 
 
 void PSX::display_memory()
-{
-    // TODO
-}
-
-
-void PSX::display_execution()
 {
     // TODO
 }

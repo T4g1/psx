@@ -35,3 +35,21 @@ void ToggleButton(const char *text, bool *boolean)
 
     ImGui::PopStyleColor(1);
 }
+
+
+void ColorBoolean(bool condition)
+{
+    ImVec4 active = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+    ImVec4 inactive = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+    ImVec4 color = inactive;
+    if (condition) {
+        color = active;
+    }
+
+    ImGui::ColorButton("MyColor##3c", color,
+        ImGuiColorEditFlags_NoTooltip |
+        ImGuiColorEditFlags_NoDragDrop |
+        ImGuiColorEditFlags_NoOptions
+    );
+}

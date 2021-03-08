@@ -40,7 +40,6 @@ class PSX {
 
     Uint32 last_refresh;
 
-    void display_registers();
     void display_memory();
     void display_execution();
     void display_breakpoints();

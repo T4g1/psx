@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "imgui.h"
+
 #include "log.h"
 #include "interconnect.h"
 #include "instruction.h"
@@ -179,7 +181,7 @@ void CPU::set_inter(Interconnect* inter)
     this->inter = inter;
 }
 
-void CPU::display_registers()
+void CPU::print_registers()
 {
     debug("PC: 0x%08x ", PC);
     debug("Next PC: 0x%08x ", nextPC);
@@ -189,6 +191,44 @@ void CPU::display_registers()
     for (size_t i=0; i<REG_COUNT; i++) {
         debug("$r%zu: 0x%08x\n", i, reg[i]);
     }
+}
+
+void CPU::display_registers(bool *status)
+{
+    const char *title = "Registers";
+
+    if (ImGui::Begin(title, status)) {
+        ImGui::BeginChild("registers");
+
+        ImGui::Text("PC: 0x%08X", PC);
+        ImGui::Separator();
+        ImGui::Text("HI: 0x%08X LOW: 0x%08X", HI, LO);
+        ImGui::Text("SR: 0x%08X", SR);
+        ImGui::Text("CAUSE: 0x%08X EPC: 0x%08X", CAUSE, EPC);
+        ImGui::Separator();
+        for (size_t i=0; i<REG_COUNT; i++) {
+            ImGui::Text("R%02zu: 0x%08x OUT_R%02zu: 0x%08x", i, reg[i], i, out_reg[i]);
+        }
+        ImGui::Separator();
+
+        ImGui::Columns(2, "boolean", false);
+
+        ImGui::Text("Branch?");
+        ImGui::NextColumn();
+        ColorBoolean(isBranch);
+        ImGui::NextColumn();
+
+        ImGui::Text("Delay slot?");
+        ImGui::NextColumn();
+        ColorBoolean(isDelaySlot);
+        ImGui::NextColumn();
+
+        ImGui::Columns(1, "boolean", false);
+
+        ImGui::EndChild();
+    }
+
+    ImGui::End();
 }
 
 uint32_t CPU::get_reg(size_t index)

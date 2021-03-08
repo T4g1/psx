@@ -129,6 +129,8 @@ bool PSX::initGUI()
     show_breakpoints = false;
     show_gpu = false;
 
+    last_refresh = 0;
+
     return true;
 }
 
@@ -182,7 +184,7 @@ void PSX::draw()
     }
     ImGui::EndMainMenuBar();
 
-    if (show_cpu) display_registers();
+    if (show_cpu) cpu->display_registers(&show_cpu);
     if (show_memory) display_memory();
     if (show_execution) display_execution();
     if (show_breakpoints) display_breakpoints();
@@ -276,12 +278,6 @@ void PSX::reset()
  * @param[in]  filepath  The filepath
  */
 void PSX::load_rom(std::string filepath)
-{
-    // TODO
-}
-
-
-void PSX::display_registers()
 {
     // TODO
 }

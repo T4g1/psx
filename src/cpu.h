@@ -67,7 +67,8 @@ public:
 
     void set_inter(Interconnect* inter);
 
-    void display_registers();
+    void print_registers();
+    void display_registers(bool *status);
 
     uint32_t get_reg(size_t index);
     int32_t get_reg_se(size_t index);

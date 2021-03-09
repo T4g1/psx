@@ -4,6 +4,8 @@
 #include  <array>
 #include  <cstdint>
 
+#include "interconnect.h"
+
 #define INSTRUCTION_LENGTH  4 // 4 * 8bits = 32 bits
 #define DEFAULT_PC          0xBFC00000
 #define DEFAULT_REG         0xDEADBEEF
@@ -52,6 +54,18 @@ class CPU {
     uint32_t SR;
     uint32_t CAUSE;         // cop0 13: Cause Register
     uint32_t EPC;           // cop0 14: EPC
+
+    template<typename T>
+    void store(uint32_t address, T value)
+    {
+        inter->store<T>(address, value);
+    }
+
+    template<typename T>
+    T load(uint32_t address)
+    {
+        return inter->load<T>(address);
+    }
 
 public:
     ~CPU();

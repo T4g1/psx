@@ -1,46 +1,5 @@
 #include "interconnect.h"
 
-#include "log.h"
-#include "spu.h"
-#include "bios.h"
-#include "ram.h"
-#include "common.h"
-
-#define RAM_START               0x00000000
-
-#define BIOS_START              0x1FC00000
-
-#define SYS_CONTROL_START       0x1F801000
-#define SYS_CONTROL_SIZE        36
-
-#define RAM_SIZE_START          0x1F801060
-#define RAM_SIZE_SIZE           4
-
-#define SPU_START               0x1F801C00
-#define SPU_SIZE                640
-
-// KSEG2
-#define CACHE_CONTROL_START     0xFFFE0130
-#define CACHE_CONTROL_SIZE      4
-
-#define EXPANSION_1_START       0x1F000000
-#define EXPANSION_1_SIZE        8192 * 1024
-
-#define IRQ_CONTROL_START       0x1F801070
-#define IRQ_CONTROL_SIZE        8
-
-#define DMA_START               0x1F801080
-#define DMA_SIZE                128
-
-#define TIMERS_START            0x1F801100
-#define TIMERS_SIZE             16 * 3 // 3 timers
-
-#define GPU_START               0x1F801810
-#define GPU_SIZE                2 * 4
-
-#define EXPANSION_2_START       0x1F802000
-#define EXPANSION_2_SIZE        66
-
 
 const uint32_t REGION_MASK[] = {
     // KUSEG: 2048MB
@@ -75,270 +34,6 @@ bool Interconnect::init(SPU *spu, BIOS *bios, RAM *ram)
 }
 
 
-void Interconnect::store8(uint32_t address, uint8_t value)
-{
-    address = mask_region(address);
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        ram->store8(address - RAM_START, value);
-    }
-
-    // Is it mapped to EXPANSION 2 ?
-    else if (in_range(address, EXPANSION_2_START, EXPANSION_2_SIZE)) {
-        uint32_t offset = address - EXPANSION_2_START;
-
-        error("Unhandled store8 to EXPANSION 2 register: 0x%08x: 0x%02x\n", offset, value);
-    }
-
-    else {
-        error("Unhandled store8 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
-void Interconnect::store16(uint32_t address, uint16_t value)
-{
-    address = mask_region(address);
-
-    // Unaligned memory access should be handled differently
-    if (address % 2 != 0) {
-        error("Unaligned store16 at 0x%08x\n", address);
-        exit(1);
-    }
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        ram->store16(address - RAM_START, value);
-    }
-
-    // Is it mapped to SPU ?
-    else if (in_range(address, SPU_START, SPU_SIZE)) {
-        //uint32_t offset = address - SPU_START;
-        //error("Unhandled store16 to SPU register: 0x%08x: 0x%04x\n", offset, value);
-    }
-
-    // Is it mapped to TIMERS ?
-    else if (in_range(address, TIMERS_START, TIMERS_SIZE)) {
-        uint32_t offset = address - TIMERS_START;
-
-        error("Unhandled store16 to TIMERS register: 0x%08x: 0x%04x\n", offset, value);
-    }
-
-    // IRQ_CONTROL register
-    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
-        uint32_t offset = address - IRQ_CONTROL_START;
-        error("Unhandled store16 to IRQ_CONTROL register: 0x%08x: 0x%04x\n", offset, value);
-    }
-
-    else {
-        error("Unhandled store16 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
-void Interconnect::store32(uint32_t address, uint32_t value)
-{
-    address = mask_region(address);
-
-    // Unaligned memory access should be handled differently
-    if (address % 4 != 0) {
-        error("Unaligned store32 at 0x%08x\n", address);
-        exit(1);
-    }
-
-    //debug("[MEM] Store to: 0x%08x\n", address);
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        ram->store32(address - RAM_START, value);
-    }
-
-    // Is it mapped to GPU ?
-    else if (in_range(address, GPU_START, GPU_SIZE)) {
-        uint32_t offset = address - GPU_START;
-        error("Unhandled store32 to GPU register: 0x%08x: 0x%08x\n", offset, value);
-    }
-
-    // Is it mapped to BIOS ?
-    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
-        bios->store32(address - BIOS_START, value);
-    }
-
-    // Is it mapped to DMA ?
-    else if (in_range(address, DMA_START, DMA_SIZE)) {
-        uint32_t offset = address - DMA_START;
-        error("Unhandled store32 to DMA register: 0x%08x: 0x%08x\n", offset, value);
-    }
-
-    // Is it mapped to TIMERS ?
-    else if (in_range(address, TIMERS_START, TIMERS_SIZE)) {
-        uint32_t offset = address - TIMERS_START;
-
-        error("Unhandled store32 to TIMERS register: 0x%08x: 0x%04x\n", offset, value);
-    }
-
-    // Is it mapped to EXPANSION 1 or 2 ?
-    else if (in_range(address, SYS_CONTROL_START, SYS_CONTROL_SIZE)) {
-        uint32_t offset = address - SYS_CONTROL_START;
-
-        switch(offset) {
-        case 0:
-            if (value != EXPANSION_1_START) {
-                error("Bad expansion 1 base address 0x%08x\n", value);
-                exit(1);
-            }
-            break;
-        case 4:
-            if (value != EXPANSION_2_START) {
-                error("Bad expansion 2 base address 0x%08x\n", value);
-                exit(1);
-            }
-            break;
-        default:
-            error("Unhandled store32 to MEM_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
-            //exit(1);
-            break;
-        }
-    }
-
-    // RAM_SIZE for RAM configuration
-    else if (in_range(address, RAM_SIZE_START, RAM_SIZE_SIZE)) {
-        uint32_t offset = address - RAM_SIZE_START;
-        error("Unhandled store32 to RAM_SIZE register: 0x%08x: 0x%08x\n", offset, value);
-    }
-
-    // CACHE_CONTROL register
-    else if (in_range(address, CACHE_CONTROL_START, CACHE_CONTROL_SIZE)) {
-        uint32_t offset = address - CACHE_CONTROL_START;
-        error("Unhandled store32 to CACHE_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
-    }
-
-    // IRQ_CONTROL register
-    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
-        uint32_t offset = address - IRQ_CONTROL_START;
-        error("Unhandled store32 to IRQ_CONTROL register: 0x%08x: 0x%08x\n", offset, value);
-    }
-
-    else {
-        error("Unhandled store32 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
-uint8_t Interconnect::load8(uint32_t address)
-{
-    address = mask_region(address);
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        return ram->load8(address - RAM_START);
-    }
-
-    // Is it mapped to BIOS ?
-    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
-        return bios->load8(address - BIOS_START);
-    }
-
-    // Is it mapped to EXPANSION 1 ?
-    else if (in_range(address, EXPANSION_1_START, EXPANSION_1_SIZE)) {
-        return 0xFF;
-    }
-
-    else {
-        error("Unhandled load8 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
-uint16_t Interconnect::load16(uint32_t address)
-{
-    address = mask_region(address);
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        return ram->load16(address - RAM_START);
-    }
-
-    // Is it mapped to SPU ?
-    else if (in_range(address, SPU_START, SPU_SIZE)) {
-        //uint32_t offset = address - SPU_START;
-        //error("Unhandled load16 to SPU register: 0x%08x\n", offset);
-        return 0;
-    }
-
-    // IRQ_CONTROL register
-    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
-        uint32_t offset = address - IRQ_CONTROL_START;
-        error("Unhandled load16 to IRQ_CONTROL register: 0x%08x\n", offset);
-        return 0;
-    }
-
-    else {
-        error("Unhandled load16 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
-uint32_t Interconnect::load32(uint32_t address)
-{
-    address = mask_region(address);
-
-    // Unaligned memory access should be handled differently
-    if (address % 4 != 0) {
-        error("Unaligned load32 at 0x%08x\n", address);
-        exit(1);
-    }
-
-    // Is it mapped to RAM ?
-    if (in_range(address, RAM_START, RAM_SIZE)) {
-        return ram->load32(address - RAM_START);
-    }
-
-    // Is it mapped to GPU ?
-    else if (in_range(address, GPU_START, GPU_SIZE)) {
-        uint32_t offset = address - GPU_START;
-
-        switch(offset) {
-        // Let the CPU knows GPU is ready
-        case 4: return 0x10000000;
-        default:
-            error("Unhandled load32 to GPU register: 0x%08x\n", offset);
-            return 0;
-        }
-    }
-
-    // Is it mapped to BIOS ?
-    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
-        return bios->load32(address - BIOS_START);
-    }
-
-    // Is it mapped to DMA ?
-    else if (in_range(address, DMA_START, DMA_SIZE)) {
-        uint32_t offset = address - DMA_START;
-        error("Unhandled load32 to DMA register: 0x%08x\n", offset);
-        return 0;
-    }
-
-    // IRQ_CONTROL register
-    else if (in_range(address, IRQ_CONTROL_START, IRQ_CONTROL_SIZE)) {
-        uint32_t offset = address - IRQ_CONTROL_START;
-        error("Unhandled load32 to IRQ_CONTROL register: 0x%08x\n", offset);
-        return 0;
-    }
-
-    else {
-        error("Unhandled load32 at 0x%08x\n", address);
-        exit(1);
-    }
-}
-
-
 bool Interconnect::canLoad32(uint32_t address)
 {
     address = mask_region(address);
@@ -353,13 +48,18 @@ bool Interconnect::canLoad32(uint32_t address)
         return true;
     }
 
-    // Is it mapped to GPU ?
-    else if (in_range(address, GPU_START, GPU_SIZE)) {
+    // Is it mapped to BIOS ?
+    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
         return true;
     }
 
-    // Is it mapped to BIOS ?
-    else if (in_range(address, BIOS_START, BIOS_SIZE)) {
+    // Is it mapped to SPU ?
+    else if (in_range(address, SPU_START, SPU_SIZE)) {
+        return true;
+    }
+
+    // Is it mapped to GPU ?
+    else if (in_range(address, GPU_START, GPU_SIZE)) {
         return true;
     }
 
@@ -373,7 +73,5 @@ bool Interconnect::canLoad32(uint32_t address)
         return true;
     }
 
-    else {
-        return false;
-    }
+    return false;
 }

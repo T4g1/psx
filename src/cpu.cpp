@@ -6,7 +6,6 @@
 #include "imgui.h"
 
 #include "log.h"
-#include "interconnect.h"
 #include "instruction.h"
 #include "common.h"
 
@@ -73,7 +72,7 @@ void CPU::run_next()
         return;
     }
 
-    uint32_t instruction = inter->load32(PC);
+    uint32_t instruction = load<uint32_t>(PC);
 
     PC = nextPC;
     nextPC += INSTRUCTION_LENGTH;
@@ -249,7 +248,7 @@ void CPU::display_execution(bool *status)
 
             uint32_t address = PC + (i * INSTRUCTION_LENGTH);
             if (inter->canLoad32(address)) {
-                uint32_t data = inter->load32(address);
+                uint32_t data = load<uint32_t>(address);
 
                 decode(buffer, INSTRUCTION_MAX_SIZE, data);
                 ImGui::Text("0x%08X %s", data, buffer);
@@ -519,7 +518,7 @@ void CPU::COP3()
 void CPU::LB(size_t rs, size_t rt, int32_t imm16_se)
 {
     // Cast for sign extension
-    int8_t value = (int8_t)inter->load8(get_reg(rs) + imm16_se);
+    int8_t value = (int8_t) load<uint8_t>(get_reg(rs) + imm16_se);
 
     // Create a pending load
     load_reg = rt;
@@ -532,7 +531,7 @@ void CPU::LH(size_t rs, size_t rt, int32_t imm16_se)
     if (address % 2 != 0) {
         exception(EXCEPTION_LOAD_ADDRESS_ERROR);
     } else {
-        int16_t value = (int16_t) inter->load16(address);
+        int16_t value = (int16_t) load<uint16_t>(address);
 
         // Create a pending load
         load_reg = rt;
@@ -549,7 +548,7 @@ void CPU::LWL(size_t rs, size_t rt, int32_t imm16_se)
 
     // Load the word containing the left part the unaligned addressed word
     uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
-    uint32_t aligned_value = inter->load32(aligned_address);
+    uint32_t aligned_value = load<uint32_t>(aligned_address);
 
     // Depending on the address alignement, store the relevant left part in the
     // loaded value
@@ -574,7 +573,7 @@ void CPU::LW(size_t rs, size_t rt, int32_t imm16_se)
     } else {
         // Create a pending load
         load_reg = rt;
-        load_value = inter->load32(address);
+        load_value = load<uint32_t>(address);
     }
 }
 
@@ -582,7 +581,7 @@ void CPU::LBU(size_t rs, size_t rt, int32_t imm16_se)
 {
     // Create a pending load
     load_reg = rt;
-    load_value = (uint32_t) inter->load8(get_reg(rs) + imm16_se);
+    load_value = (uint32_t) load<uint8_t>(get_reg(rs) + imm16_se);
 }
 
 void CPU::LHU(size_t rs, size_t rt, int32_t imm16_se)
@@ -593,7 +592,7 @@ void CPU::LHU(size_t rs, size_t rt, int32_t imm16_se)
     } else {
         // Create a pending load
         load_reg = rt;
-        load_value = (uint32_t) inter->load16(address);
+        load_value = (uint32_t) load<uint16_t>(address);
     }
 }
 
@@ -606,7 +605,7 @@ void CPU::LWR(size_t rs, size_t rt, int32_t imm16_se)
 
     // Load the word containing the left part the unaligned addressed word
     uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
-    uint32_t aligned_value = inter->load32(aligned_address);
+    uint32_t aligned_value = load<uint32_t>(aligned_address);
 
     // Depending on the address alignement, store the relevant right part in the
     // loaded value
@@ -630,7 +629,7 @@ void CPU::SB(size_t rs, size_t rt, int32_t imm16_se)
         return;
     }
 
-    inter->store8(get_reg(rs) + imm16_se, (uint8_t) get_reg(rt));
+    store<uint8_t>(get_reg(rs) + imm16_se, (uint8_t) get_reg(rt));
 }
 
 void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
@@ -644,7 +643,7 @@ void CPU::SH(size_t rs, size_t rt, int32_t imm16_se)
     if (address % 2 != 0) {
         exception(EXCEPTION_STORE_ADDRESS_ERROR);
     } else {
-        inter->store16(address, (uint16_t) get_reg(rt));
+        store<uint16_t>(address, (uint16_t) get_reg(rt));
     }
 }
 
@@ -654,7 +653,7 @@ void CPU::SWL(size_t rs, size_t rt, int32_t imm16_se)
     uint32_t value = get_reg(rt);
 
     uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
-    uint32_t memory = inter->load32(aligned_address);
+    uint32_t memory = load<uint32_t>(aligned_address);
     switch(address & 0x03) {
     case 0: memory = (memory & 0xFFFFFF00) | (value >> 24); break;
     case 1: memory = (memory & 0xFFFF0000) | (value >> 16); break;
@@ -663,7 +662,7 @@ void CPU::SWL(size_t rs, size_t rt, int32_t imm16_se)
     default: exit(1); break; // Unreachable
     }
 
-    inter->store32(address, memory);
+    store<uint32_t>(address, memory);
 }
 
 void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
@@ -677,7 +676,7 @@ void CPU::SW(size_t rs, size_t rt, int32_t imm16_se)
     if (address % 4 != 0) {
         exception(EXCEPTION_STORE_ADDRESS_ERROR);
     } else {
-        inter->store32(address, get_reg(rt));
+        store<uint32_t>(address, get_reg(rt));
     }
 }
 
@@ -687,7 +686,7 @@ void CPU::SWR(size_t rs, size_t rt, int32_t imm16_se)
     uint32_t value = get_reg(rt);
 
     uint32_t aligned_address = address & ~0x00000003; // Clear two last bits
-    uint32_t memory = inter->load32(aligned_address);
+    uint32_t memory = load<uint32_t>(aligned_address);
     switch(address & 0x03) {
     case 0: memory = (memory & 0x00000000) | (value << 0); break;
     case 1: memory = (memory & 0x000000FF) | (value << 8); break;
@@ -696,7 +695,7 @@ void CPU::SWR(size_t rs, size_t rt, int32_t imm16_se)
     default: exit(1); break; // Unreachable
     }
 
-    inter->store32(address, memory);
+    store<uint32_t>(address, memory);
 }
 
 void CPU::LWC0()

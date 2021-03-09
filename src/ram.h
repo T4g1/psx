@@ -3,6 +3,11 @@
 
 #include <cstdint>
 
+#include "common.h"
+
+
+#define POISON_VALUE        0xCA
+
 #define RAM_SIZE            2048 * 1024
 
 
@@ -17,12 +22,27 @@ public:
 
     bool init();
 
-    void store8(uint32_t address, uint8_t value);
-    void store16(uint32_t address, uint16_t value);
-    void store32(uint32_t address, uint32_t value);
-    uint8_t load8(uint32_t address);
-    uint16_t load16(uint32_t address);
-    uint32_t load32(uint32_t address);
+    template<typename T>
+    void store(uint32_t address, T value)
+    {
+        for (size_t i=0; i<sizeof(T); i++) {
+            data[address + i] = extract(value, i * 8, 8);
+        }
+    }
+
+    template<typename T>
+    T load(uint32_t address)
+    {
+        T value = 0;
+
+        for (size_t i=0; i<sizeof(T); i++) {
+            uint8_t byte = data[address + i];
+
+            value |= byte << (i * 8);
+        }
+
+        return value;
+    }
 };
 
 #endif /* RAM_H */

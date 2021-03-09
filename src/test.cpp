@@ -149,7 +149,7 @@ bool test_store_load()
     cpu->force_set_reg(1, 0x000000FF);
 
     cpu->SB(0, 1, 0x00000000);
-    ASSERT(ram->load8(0x00000000) == 0xFF);
+    ASSERT(ram->load<uint8_t>(0x00000000) == 0xFF);
 
     cpu->LB(0, 1, 0x00000000);
     cpu->run_load();
